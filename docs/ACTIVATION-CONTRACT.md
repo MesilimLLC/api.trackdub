@@ -16,7 +16,7 @@ never reach the key that signs license tokens.
 ## Why it looks like this: ported from a service that was never deployed
 
 The implementation here is adapted from
-`Mesililm-LLC/Trackdub-Monorepo-Archive`'s `services/activation-service/` — a
+`MesilimLLC/Trackdub-Monorepo-Archive`'s `services/activation-service/` — a
 complete, previously-reviewed Cloudflare Worker that was **never deployed**
 (no matching Worker or D1 database existed in the account before this PR).
 The SQL for seat accounting (`src/activation/lib/seats.ts`) is ported
