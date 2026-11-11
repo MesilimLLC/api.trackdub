@@ -176,6 +176,14 @@ function requestBodies(fetchStub: ReturnType<typeof stubFetch>) {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("docs-rag REST search", () => {
+  it("keeps the sync manifest from using a caller's limit slot", async () => {
+    const manifestChunk = { score: 0.99, text: "{\"repos\":{}}", item: { key: "first-party/_sync.json" } };
+    stubFetch(searchResponse([manifestChunk, sourceChunk]), searchResponse([]));
+
+    const result = await searchDocs(queryEnv, { ...scopedRequest, limit: 1 });
+    expect(result.hits.map((hit) => hit.key)).toEqual([sourceHit.key]);
+  });
+
   it("sends AND and OR scoped retrieval together and maps nonempty chunks without retry", async () => {
     const fetchStub = stubFetch(
       searchResponse([sourceChunk, { score: 0, text: "x".repeat(4001) }, {}]),
