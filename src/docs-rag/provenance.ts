@@ -39,8 +39,7 @@ export async function loadSyncManifest(env: Pick<DocsRagBindings, "CORPUS">, now
   return value;
 }
 
-/** `first-party/<repo>/<path>` keys map back to a path in the sibling checkout; vendor keys carry nothing extra. */
-/** AI Search timestamps are seconds for some indexes and milliseconds for others; treat anything before 2001 in ms as seconds. */
+/** AI Search timestamps are seconds for some indexes and milliseconds for others. */
 function toMillis(indexedAt: number): number {
   return indexedAt < 1e12 ? indexedAt * 1000 : indexedAt;
 }
@@ -50,31 +49,28 @@ function indexedFromSync(sync: SyncManifest | null, indexedAt: number | undefine
   return sync?.uploadedAt !== undefined && indexedAt !== undefined && toMillis(indexedAt) >= sync.uploadedAt;
 }
 
-function commitStamp(state: { commit?: unknown; dirty?: unknown } | undefined) {
-  const commit = typeof state?.commit === "string" && state.commit !== "" ? state.commit : undefined;
+function commitFields(state: { commit?: unknown; dirty?: unknown } | undefined) {
   return {
-    ...(commit ? { syncedCommit: commit } : {}),
+    ...(typeof state?.commit === "string" && state.commit !== "" ? { syncedCommit: state.commit } : {}),
     ...(state?.dirty === true ? { syncedDirty: true } : {}),
   };
 }
 
-function syncedAtStamp(sync: SyncManifest | null) {
+function syncedAtField(sync: SyncManifest | null) {
   return typeof sync?.syncedAt === "string" && sync.syncedAt !== "" ? { syncedAt: sync.syncedAt } : {};
 }
 
-/** `first-party/<repo>/<path>` keys map back to a path in the sibling checkout; vendor keys carry nothing extra. */
-export function provenanceFor(key: string | null, sync: SyncManifest | null, indexedAt?: number) {
+/** `first-party/<repo>/<path>` maps to its repo and checkout path; any other key yields null. */
+function parseFirstPartyKey(key: string | null): { repo: string; localPath: string } | null {
   const match = key?.match(/^first-party\/([^/]+)\/(.+)$/);
-  const repo = match?.[1];
-  const localPath = match?.[2];
-  if (!repo || !localPath) return {};
-  const current = indexedFromSync(sync, indexedAt);
-  return {
-    repo,
-    localPath,
-    ...(current ? commitStamp(sync?.repos?.[repo]) : {}),
-    ...syncedAtStamp(sync),
-  };
+  return match?.[1] && match[2] ? { repo: match[1], localPath: match[2] } : null;
+}
+
+export function provenanceFor(key: string | null, sync: SyncManifest | null, indexedAt?: number) {
+  const location = parseFirstPartyKey(key);
+  if (!location) return {};
+  const commit = indexedFromSync(sync, indexedAt) ? commitFields(sync?.repos?.[location.repo]) : {};
+  return { ...location, ...commit, ...syncedAtField(sync) };
 }
 
 export async function withProvenance<T extends { hits: Array<{ key: string | null; indexedAt?: number }> }>(
