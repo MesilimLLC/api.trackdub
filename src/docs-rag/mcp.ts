@@ -1,6 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { DOC_SCOPES } from "@/docs-rag/scopes";
+import { PIN_SENTENCE } from "@/docs-rag/pin.generated";
+import { withProvenance } from "@/docs-rag/provenance";
 import { askDocs, searchDocs, RateLimitedError, type SearchRequest } from "@/docs-rag/query";
 import { getDocText } from "@/docs-rag/corpus";
 import type { DocsRagBindings } from "@/docs-rag/types";
@@ -37,7 +39,9 @@ export function createDocsRagServer(env: DocsRagBindings, clientKey: string): Mc
         "Curated Trackdub + vendor documentation search (R2 corpus indexed by Cloudflare AI Search). " +
         "Covers Trackdub, Trackdub-gated, api.trackdub first-party docs and pinned vendor docs " +
         "(NVIDIA TRT-RTX/EP ABI, Windows ML, ONNX Runtime EPs, AMD, Intel, Qualcomm, Qwen, Whisper, speech models). " +
-        "First-party text outranks vendor /latest/ pages on disagreement. Trackdub pins TensorRT-RTX EP ABI 0.4.2 (Windows) / 0.4.0 (Linux), CUDA cu13, TensorRT-RTX 1.6.1. " +
+        "First-party text outranks vendor /latest/ pages on disagreement. " + PIN_SENTENCE + " " +
+        "Prefer search_trackdub_docs; use ask_trackdub_docs only when you want a synthesized answer, and check version numbers and flags in it against the cited hits. " +
+        "First-party hits carry repo, localPath and syncedCommit: when you have that checkout, read the local file instead of trusting the indexed copy. " +
         "Each tool call is stateless: compose every query as self-contained (include symbols, product names, and concrete context — " +
         "never bare follow-ups like 'what about its limitations?'; restate the full question instead).",
     },
@@ -61,14 +65,14 @@ export function createDocsRagServer(env: DocsRagBindings, clientKey: string): Mc
     {
       title: "Search Trackdub docs",
       description:
-        "Hybrid (vector+keyword) search over Trackdub and pinned vendor docs. Returns ranked chunks with R2 keys and scores. Use for implementation facts: provider registration, EP ABI details, pin versions, pipeline stages.",
+        "Default choice. Hybrid (vector+keyword) search over Trackdub and pinned vendor docs. Returns ranked chunks with R2 keys and scores; first-party hits also carry repo, localPath and the commit the corpus was synced from. Use for implementation facts: provider registration, EP ABI details, pin versions, pipeline stages.",
       inputSchema: searchShape,
     },
     async (args, _extra): Promise<ToolResult> => {
       const parsed = parseArgs(args as Record<string, unknown>);
       if ("error" in parsed) return errorResult(parsed.error);
       try {
-        const result = await searchDocs(env, parsed, clientKey);
+        const result = await withProvenance(env, await searchDocs(env, parsed, clientKey));
         return textResult(result);
       } catch (error) {
         if (error instanceof RateLimitedError) {
@@ -85,7 +89,7 @@ export function createDocsRagServer(env: DocsRagBindings, clientKey: string): Mc
       title: "Ask Trackdub docs",
       description:
         "Answer a question from the corpus using Workers AI generation with retrieved context. Slower and rate-limited tighter " +
-        "than search; prefer search_trackdub_docs when you just need chunks. Answers state when the corpus lacks the answer. " +
+        "than search; prefer search_trackdub_docs when you just need chunks. The answer is generated text: confirm exact versions, flags and symbols against hits[].key before relying on them. Answers state when the corpus lacks the answer. " +
         "Stateless: the rewriter cannot resolve follow-ups — restate the full question with context, never send 'what about X?'.",
       inputSchema: searchShape,
     },
@@ -93,7 +97,7 @@ export function createDocsRagServer(env: DocsRagBindings, clientKey: string): Mc
       const parsed = parseArgs(args as Record<string, unknown>);
       if ("error" in parsed) return errorResult(parsed.error);
       try {
-        const result = await askDocs(env, parsed, clientKey);
+        const result = await withProvenance(env, await askDocs(env, parsed, clientKey));
         return textResult(result);
       } catch (error) {
         return errorResult(error instanceof Error ? error.message : "ask failed");

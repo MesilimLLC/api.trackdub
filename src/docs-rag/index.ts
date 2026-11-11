@@ -2,6 +2,7 @@ import { DOC_SCOPES } from "@/docs-rag/scopes";
 import { askDocs, parseSearchBody, searchDocs, RateLimitedError } from "@/docs-rag/query";
 import { requireToken, checkRateLimits, rateLimitedResponse, limiterKeyFromToken } from "@/docs-rag/auth";
 import { createDocsRagServer } from "@/docs-rag/mcp";
+import { withProvenance } from "@/docs-rag/provenance";
 import { createMcpHandler } from "agents/mcp";
 import { Hono } from "hono";
 import type { DocsRagEnv } from "@/docs-rag/types";
@@ -45,7 +46,7 @@ app.post("/v1/search", async (c) => {
   const parsed = parseSearchBody(await c.req.json().catch(() => null));
   if ("error" in parsed) return c.json({ error: parsed.error }, 400);
   try {
-    return c.json(await searchDocs(c.env, parsed, clientKey));
+    return c.json(await withProvenance(c.env, await searchDocs(c.env, parsed, clientKey)));
   } catch (error) {
     if (error instanceof RateLimitedError) {
       return c.json({ error: "rate_limited", limiter: "upstream", retry_after_seconds: 10 }, {
@@ -71,7 +72,7 @@ app.post("/v1/ask", async (c) => {
   const parsed = parseSearchBody(await c.req.json().catch(() => null));
   if ("error" in parsed) return c.json({ error: parsed.error }, 400);
   try {
-    return c.json(await askDocs(c.env, parsed, clientKey));
+    return c.json(await withProvenance(c.env, await askDocs(c.env, parsed, clientKey)));
   } catch (error) {
     if (error instanceof RateLimitedError) {
       return c.json({ error: "rate_limited", limiter: "upstream", retry_after_seconds: 10 }, {
