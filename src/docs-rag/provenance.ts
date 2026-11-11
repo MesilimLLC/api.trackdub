@@ -69,20 +69,29 @@ function parseFirstPartyKey(key: string | null): { repo: string; localPath: stri
   return match?.[1] && match[2] ? { repo: match[1], localPath: match[2] } : null;
 }
 
+function generatedFields(repo: string, sync: SyncManifest | null) {
+  return { repo, generated: true, source: "runtime/trt-rtx-ep.manifest.json", ...syncedAtField(sync) };
+}
+
+function stampFor(
+  key: string,
+  sync: SyncManifest | null,
+  freshness: { indexedAt?: number; uploadedAt?: number },
+  repo: string,
+) {
+  const member = sync?.files?.includes(key) === true;
+  return member && indexedCurrent(freshness.indexedAt, freshness.uploadedAt) ? commitFields(sync?.repos?.[repo]) : {};
+}
+
 export function provenanceFor(
   key: string | null,
   sync: SyncManifest | null,
   freshness: { indexedAt?: number; uploadedAt?: number } = {},
 ) {
   const location = parseFirstPartyKey(key);
-  if (!location) return {};
-  if (key === GENERATED_PIN_KEY) {
-    return { repo: location.repo, generated: true, source: "runtime/trt-rtx-ep.manifest.json", ...syncedAtField(sync) };
-  }
-  const member = key !== null && sync?.files?.includes(key) === true;
-  const current = member && indexedCurrent(freshness.indexedAt, freshness.uploadedAt);
-  const commit = current ? commitFields(sync?.repos?.[location.repo]) : {};
-  return { ...location, ...commit, ...syncedAtField(sync) };
+  if (!location || key === null) return {};
+  if (key === GENERATED_PIN_KEY) return generatedFields(location.repo, sync);
+  return { ...location, ...stampFor(key, sync, freshness, location.repo), ...syncedAtField(sync) };
 }
 
 async function objectUploadedAt(env: Pick<DocsRagBindings, "CORPUS">, key: string): Promise<number | undefined> {
