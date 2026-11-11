@@ -43,6 +43,7 @@ function hits(chunks: DocsRagSearchChunk[] | undefined) {
     score: chunk.score ?? null,
     key: chunkKey(chunk),
     text: (chunk.text ?? "").slice(0, 4000),
+    ...(typeof chunk.item?.timestamp === "number" ? { indexedAt: chunk.item.timestamp } : {}),
   }));
 }
 

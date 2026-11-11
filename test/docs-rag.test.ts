@@ -140,7 +140,7 @@ const sourceChunk = {
   text: "Use the standalone EP plugin.",
   item: { key: "vendor/nvidia/plugin.md", timestamp: 1, metadata: {} },
 };
-const sourceHit = { score: 0.87, key: "vendor/nvidia/plugin.md", text: "Use the standalone EP plugin." };
+const sourceHit = { score: 0.87, key: "vendor/nvidia/plugin.md", text: "Use the standalone EP plugin.", indexedAt: 1 };
 const scopedRequest = { query: "TRT RTX plugin", scope: "nvidia", limit: 3 } as const;
 
 function searchResponse(chunks: unknown[]) {
