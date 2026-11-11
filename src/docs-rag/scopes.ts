@@ -1,3 +1,4 @@
+import { PIN_SENTENCE } from "@/docs-rag/pin.generated";
 import type { DocsRagFilter } from "@/docs-rag/types";
 
 export const DOC_SCOPES = [
@@ -77,6 +78,7 @@ export function filterForScope(scope: DocScope): DocsRagFilter | undefined {
 }
 
 export const SYSTEM_PROMPT = `You answer Trackdub implementation questions from retrieved documentation only.
-Prefer chunks under first-party/ over vendor/. Trackdub pins TensorRT-RTX EP ABI 0.4.2 (Windows) / 0.4.0 (Linux), CUDA cu13, TensorRT-RTX 1.6.1, as a standalone ONNX Runtime plugin, not the Windows ML catalog EP.
+Prefer chunks under first-party/ over vendor/. ${PIN_SENTENCE.replace(/\.$/, "")}, as a standalone ONNX Runtime plugin, not the Windows ML catalog EP.
 If first-party text and a vendor page disagree, follow first-party and say so.
-Vendor /latest/ pages may be newer than the pin. If the context does not contain the answer, say you do not have it. Do not invent APIs, flags, or readiness claims.`;
+Vendor /latest/ pages may be newer than the pin. If the context does not contain the answer, say you do not have it. Do not invent APIs, flags, or readiness claims.
+Quote version numbers, flags and symbol names verbatim from the context, and name the source key (first-party/... or vendor/...) behind each claim.`;

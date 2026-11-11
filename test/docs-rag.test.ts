@@ -140,7 +140,7 @@ const sourceChunk = {
   text: "Use the standalone EP plugin.",
   item: { key: "vendor/nvidia/plugin.md", timestamp: 1, metadata: {} },
 };
-const sourceHit = { score: 0.87, key: "vendor/nvidia/plugin.md", text: "Use the standalone EP plugin." };
+const sourceHit = { score: 0.87, key: "vendor/nvidia/plugin.md", text: "Use the standalone EP plugin.", indexedAt: 1 };
 const scopedRequest = { query: "TRT RTX plugin", scope: "nvidia", limit: 3 } as const;
 
 function searchResponse(chunks: unknown[]) {
@@ -176,6 +176,20 @@ function requestBodies(fetchStub: ReturnType<typeof stubFetch>) {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("docs-rag REST search", () => {
+  it("asks chat for one extra chunk and returns no more than the requested limit", async () => {
+    stubFetch(Response.json({ ...chatPayload(), chunks: [sourceChunk, { ...sourceChunk, id: "chunk-2", text: "Second passage." }] }));
+    const result = await askDocs(queryEnv, { query: "plugin", scope: "all", limit: 1 });
+    expect(result.hits).toHaveLength(1);
+  });
+
+  it("keeps the sync manifest from using a caller's limit slot", async () => {
+    const manifestChunk = { score: 0.99, text: "{\"repos\":{}}", item: { key: "first-party/_sync.json" } };
+    stubFetch(searchResponse([manifestChunk, sourceChunk]), searchResponse([]));
+
+    const result = await searchDocs(queryEnv, { ...scopedRequest, limit: 1 });
+    expect(result.hits.map((hit) => hit.key)).toEqual([sourceHit.key]);
+  });
+
   it("sends AND and OR scoped retrieval together and maps nonempty chunks without retry", async () => {
     const fetchStub = stubFetch(
       searchResponse([sourceChunk, { score: 0, text: "x".repeat(4001) }, {}]),
@@ -202,14 +216,14 @@ describe("docs-rag REST search", () => {
     expect(requestBodies(fetchStub)).toEqual([{
       query: "TRT RTX plugin",
       ai_search_options: { retrieval: {
-        max_num_results: 20,
+        max_num_results: 21,
         keyword_match_mode: "and",
         filters: { folder: { $gte: "vendor/nvidia/", $lt: "vendor/nvidia0" } },
       } },
     }, {
       query: "TRT RTX plugin",
       ai_search_options: { retrieval: {
-        max_num_results: 20,
+        max_num_results: 21,
         keyword_match_mode: "or",
         filters: { folder: { $gte: "vendor/nvidia/", $lt: "vendor/nvidia0" } },
       } },
@@ -227,14 +241,14 @@ describe("docs-rag REST search", () => {
       {
         query: "TRT RTX plugin",
         ai_search_options: { retrieval: {
-          max_num_results: 3, keyword_match_mode: "and",
+          max_num_results: 4, keyword_match_mode: "and",
           filters: { folder: { $gte: "vendor/nvidia/", $lt: "vendor/nvidia0" } },
         } },
       },
       {
         query: "TRT RTX plugin",
         ai_search_options: { retrieval: {
-          max_num_results: 3, keyword_match_mode: "or",
+          max_num_results: 4, keyword_match_mode: "or",
           filters: { folder: { $gte: "vendor/nvidia/", $lt: "vendor/nvidia0" } },
         } },
       },
@@ -296,13 +310,13 @@ describe("docs-rag REST search", () => {
       scope: "all", matchMode: "union", hits: [],
     });
     expect(requestBodies(fetchStub)).toEqual([
-      { query: "rare term", ai_search_options: { retrieval: { max_num_results: 1, keyword_match_mode: "and",
+      { query: "rare term", ai_search_options: { retrieval: { max_num_results: 2, keyword_match_mode: "and",
         filters: { folder: { $gte: "first-party/", $lt: "first-party0" } } } } },
-      { query: "rare term", ai_search_options: { retrieval: { max_num_results: 1, keyword_match_mode: "and",
+      { query: "rare term", ai_search_options: { retrieval: { max_num_results: 2, keyword_match_mode: "and",
         filters: { folder: { $gte: "vendor/", $lt: "vendor0" } } } } },
-      { query: "rare term", ai_search_options: { retrieval: { max_num_results: 1, keyword_match_mode: "or",
+      { query: "rare term", ai_search_options: { retrieval: { max_num_results: 2, keyword_match_mode: "or",
         filters: { folder: { $gte: "first-party/", $lt: "first-party0" } } } } },
-      { query: "rare term", ai_search_options: { retrieval: { max_num_results: 1, keyword_match_mode: "or",
+      { query: "rare term", ai_search_options: { retrieval: { max_num_results: 2, keyword_match_mode: "or",
         filters: { folder: { $gte: "vendor/", $lt: "vendor0" } } } } },
     ]);
   });
@@ -445,13 +459,13 @@ describe("docs-rag first-party ordering", () => {
     expect(result.hits.map(hit => hit.key)).toEqual(keys);
     expect(result.hits.map(hit => hit.score)).toEqual(scores);
     expect(requestBodies(fetchStub)).toEqual([
-      { query: "runtime cache", ai_search_options: { retrieval: { max_num_results: limit, keyword_match_mode: "and",
+      { query: "runtime cache", ai_search_options: { retrieval: { max_num_results: limit + 1, keyword_match_mode: "and",
         filters: { folder: { $gte: "first-party/", $lt: "first-party0" } } } } },
-      { query: "runtime cache", ai_search_options: { retrieval: { max_num_results: limit, keyword_match_mode: "and",
+      { query: "runtime cache", ai_search_options: { retrieval: { max_num_results: limit + 1, keyword_match_mode: "and",
         filters: { folder: { $gte: "vendor/", $lt: "vendor0" } } } } },
-      { query: "runtime cache", ai_search_options: { retrieval: { max_num_results: limit, keyword_match_mode: "or",
+      { query: "runtime cache", ai_search_options: { retrieval: { max_num_results: limit + 1, keyword_match_mode: "or",
         filters: { folder: { $gte: "first-party/", $lt: "first-party0" } } } } },
-      { query: "runtime cache", ai_search_options: { retrieval: { max_num_results: limit, keyword_match_mode: "or",
+      { query: "runtime cache", ai_search_options: { retrieval: { max_num_results: limit + 1, keyword_match_mode: "or",
         filters: { folder: { $gte: "vendor/", $lt: "vendor0" } } } } },
     ]);
   });
@@ -504,9 +518,9 @@ describe("docs-rag first-party ordering", () => {
     const result = await searchDocs(queryEnv, { query: "runtime cache", scope: "first-party", limit: 3 });
     expect(result.hits.map(hit => hit.key)).toEqual(["first-party/trackdub/a.md", "first-party/api/b.md"]);
     expect(requestBodies(fetchStub)).toEqual([
-      { query: "runtime cache", ai_search_options: { retrieval: { max_num_results: 3, keyword_match_mode: "and",
+      { query: "runtime cache", ai_search_options: { retrieval: { max_num_results: 4, keyword_match_mode: "and",
         filters: { folder: { $gte: "first-party/", $lt: "first-party0" } } } } },
-      { query: "runtime cache", ai_search_options: { retrieval: { max_num_results: 3, keyword_match_mode: "or",
+      { query: "runtime cache", ai_search_options: { retrieval: { max_num_results: 4, keyword_match_mode: "or",
         filters: { folder: { $gte: "first-party/", $lt: "first-party0" } } } } },
     ]);
   });
@@ -563,7 +577,7 @@ describe("docs-rag REST chat", () => {
       ai_search_options: {
         query_rewrite: { enabled: true },
         retrieval: {
-          max_num_results: 3,
+          max_num_results: 4,
           filters: { folder: { $gte: "vendor/nvidia/", $lt: "vendor/nvidia0" } },
         },
       },
@@ -579,7 +593,7 @@ describe("docs-rag REST chat", () => {
     expect(requestBodies(fetchStub)).toEqual([{
       messages: [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: "first question" }],
       model: "test-configured-model",
-      ai_search_options: { query_rewrite: { enabled: true }, retrieval: { max_num_results: 20 } },
+      ai_search_options: { query_rewrite: { enabled: true }, retrieval: { max_num_results: 21 } },
     }]);
   });
 
