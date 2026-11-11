@@ -1,1 +1,0 @@
-Vitest with the `vitest-pool-workers` / `cloudflare:test` runner, running tests against the actual Hono app under workerd rather than mocked fetch handlers.

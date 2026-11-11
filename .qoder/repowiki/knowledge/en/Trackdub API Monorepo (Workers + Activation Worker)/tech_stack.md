@@ -1,1 +1,0 @@
-Cloudflare ecosystem (Workers, D1, R2, cf CLI, vitest-pool-workers), Bun package manager, TypeScript 7, Hono, Better Auth 1.6, Drizzle ORM 0.45, Zod, Vitest 4.

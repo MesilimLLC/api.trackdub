@@ -1,1 +1,0 @@
-Activation tests require a seeded D1 database — run `npx tsx test/apply-migrations.ts` (or the equivalent per-activation script) before exercising `activate.test.ts`, `admin.test.ts`, `deactivate.test.ts`, etc., since fixtures insert rows directly via `bindings.DB.prepare(...).run()` rather than going through API routes.

@@ -1,0 +1,1 @@
+Bun 1.4 as package manager; Cloudflare Workers runtime (workerd) via `@cloudflare/workerd-linux-64`; Hono web framework; Better Auth for session/auth; D1 SQLite accessed through Drizzle ORM + Drizzle Kit migrations; R2 for media storage; Vitest with `@cloudflare/vitest-pool-workers` so tests execute inside real workerd; Zod for request/config validation.

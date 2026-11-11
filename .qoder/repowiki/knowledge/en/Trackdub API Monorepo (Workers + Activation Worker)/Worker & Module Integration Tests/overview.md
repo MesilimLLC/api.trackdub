@@ -1,1 +1,0 @@
-Vitest-based integration and unit tests for the Cloudflare Workers application, covering activation flows, HTTP routes, middleware, Dubs helpers, and auth/session behavior against the real app entry points.

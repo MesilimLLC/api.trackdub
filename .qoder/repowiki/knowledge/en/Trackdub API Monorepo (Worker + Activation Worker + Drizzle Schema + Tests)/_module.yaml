@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: root
-title: Trackdub API Monorepo (Workers + Activation Worker)
+title: Trackdub API Monorepo (Worker + Activation Worker + Drizzle Schema + Tests)
 scope:
     - README.md
     - .gitignore
@@ -19,34 +19,34 @@ kk_module_id: e3b0c442-98fc-1c14-9afb-f4c8996fb924
 kk_cards:
     architecture_design:
         id: 0e2ec174-9f45-1330-eed1-58b2cccc41e1
-        title: Trackdub API Monorepo (Workers + Activation Worker)
+        title: Trackdub API Monorepo (Worker + Activation Worker + Drizzle Schema + Tests)
     coding_conventions:
         id: 826830c1-7d4b-f322-da2d-44a81468ab64
-        title: Trackdub API Monorepo (Workers + Activation Worker)
+        title: Trackdub API Monorepo (Worker + Activation Worker + Drizzle Schema + Tests)
     overview:
         id: 09b0a70e-cbd7-0430-e139-f64a29e9fdea
-        title: Trackdub API Monorepo (Workers + Activation Worker)
+        title: Trackdub API Monorepo (Worker + Activation Worker + Drizzle Schema + Tests)
     tech_stack:
         id: caddc19d-ebf1-94c8-df62-4a04b448822c
-        title: Trackdub API Monorepo (Workers + Activation Worker)
+        title: Trackdub API Monorepo (Worker + Activation Worker + Drizzle Schema + Tests)
     unique_setup_and_commands:
         id: 563340fe-ae9c-5b77-5c0e-0be4794d00eb
-        title: Trackdub API Monorepo (Workers + Activation Worker)
+        title: Trackdub API Monorepo (Worker + Activation Worker + Drizzle Schema + Tests)
     build_system:
         id: 2ddc643f-d04b-932a-509b-921fea40fd68
-        title: Bun + Cloudflare cf CLI Build & Deployment System
+        title: Cloudflare Workers Build via Bun + Wrangler + Drizzle Kit
     configuration_system:
         id: c13ae431-b03c-cffa-e433-37dfc0b4129b
-        title: Cloudflare Workers Configuration Loading via cf CLI + Zod Validation
+        title: Cloudflare Worker Configuration via Zod Validation and `cf/config` Bindings
     dependency_management:
         id: 8ca6c404-995a-e407-a4ea-b1d61556e0af
-        title: Bun Package Manager with Lockfile and npmrc Peer-Dep Resolution
+        title: Bun-based Dependency Management with Pinning Overrides and allowScripts
     error_handling:
         id: 1f60dffd-7127-5da0-bac7-640bc89a4af4
-        title: Centralized ApiError Envelope with Hono onError Middleware
+        title: Hono ApiError Envelope with Centralized onError Handler
     logging_system:
         id: 10972070-a011-8849-a282-a84e113750b0
-        title: Structured JSON Logging via Hono + Workers Console
+        title: Structured JSON Logging via Hono Worker console
 kk_repo_cards:
     - build_system
     - configuration_system

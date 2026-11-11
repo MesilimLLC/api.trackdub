@@ -6,9 +6,6 @@ scope:
 source_files: []
 depends_on: []
 related_to: []
-similar_to:
-    - path: activation
-      reason: "Parallel Drizzle SQLite migration sets: `activation` owns `drizzle-activation/`, `db` owns `drizzle/`; same toolchain targeting different databases."
 kk_module_id: 7bdc25d1-694e-f984-782a-16f6f1710c1c
 kk_ordinal: 1
 kk_cards:

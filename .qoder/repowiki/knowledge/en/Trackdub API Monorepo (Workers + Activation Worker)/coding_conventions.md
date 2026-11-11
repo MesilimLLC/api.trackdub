@@ -1,3 +1,0 @@
-- Each worker keeps its own Drizzle migration directory (`drizzle/` for main, `drizzle-activation/` for activation) and its own `drizzle.*.config.ts` plus `wrangler*.jsonc` configuration file.
-- Tests are written as Vitest modules using the `@cloudflare/vitest-pool-workers` pool so they execute inside the real `workerd` runtime against the deployed bindings.
-- D1 database operations go through Drizzle ORM schemas rather than raw SQL, with schema changes committed as Drizzle migration files.

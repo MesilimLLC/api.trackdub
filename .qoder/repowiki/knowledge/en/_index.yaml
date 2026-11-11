@@ -1,9 +1,9 @@
 # 知识卡导出索引文件
 schema_version: 1
 locale: en
-commit: 485197de6e0e74d1186e488d6cccbf4acfcfc588
-branch: main
-exported_at: "2026-11-09T14:18:22Z"
+commit: 43eab44f2a341ae44e29d939c8bf85504ccb961d
+branch: docs-rag-pin-and-provenance
+exported_at: "2026-11-11T09:17:14Z"
 modules:
     activation:
         dir_name: Activation Worker (Drizzle Kit, Wrangler & Test Config)
@@ -27,12 +27,9 @@ modules:
         children: []
         depends_on: []
         related_to: []
-        similar_to:
-            - path: activation
-              reason: "Parallel Drizzle SQLite migration sets: `activation` owns `drizzle-activation/`, `db` owns `drizzle/`; same toolchain targeting different databases."
     root:
-        dir_name: Trackdub API Monorepo (Workers + Activation Worker)
-        title: Trackdub API Monorepo (Workers + Activation Worker)
+        dir_name: Trackdub API Monorepo (Worker + Activation Worker + Drizzle Schema + Tests)
+        title: Trackdub API Monorepo (Worker + Activation Worker + Drizzle Schema + Tests)
         scope:
             - README.md
             - .gitignore
@@ -52,13 +49,15 @@ modules:
         depends_on: []
         related_to: []
     tests:
-        dir_name: Worker & Module Integration Tests
-        title: Worker & Module Integration Tests
+        dir_name: Integration & Unit Test Suite
+        title: Integration & Unit Test Suite
         scope:
             - test/
         source_files: []
         children: []
         depends_on: []
         related_to:
+            - path: db
+              reason: test/apply-migrations.ts applies Drizzle SQL migrations including 0000_better_auth_init.sql for Better Auth tables into in-memory D1 before tests run.
             - path: activation
-              reason: "`test/activation/` tests boot the activation Worker via `vitest.activation.config.ts`, applying its migrations and exercising activation routes against workerd."
+              reason: test/activation/*.test.ts imports @/activation/index and exercises its HTTP routes against the activation Worker's in-memory D1 instance.
