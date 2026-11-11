@@ -2,6 +2,7 @@ import type { DocsRagBindings } from "@/docs-rag/types";
 
 /** Written by Trackdub's tools/docs-rag/sync_corpus.py: which commit of each repo the corpus came from. */
 export const SYNC_KEY = "first-party/_sync.json";
+/** Staged at this key by Trackdub's tools/docs-rag/sync_corpus.py only when the repo has no pin doc of its own; the Worker reports it as generated, not as a checkout file. Keep the two paths identical. */
 const GENERATED_PIN_KEY = "first-party/trackdub/docs/reference/docs-rag-pin.md";
 const CACHE_TTL_MS = 5 * 60_000;
 
@@ -79,7 +80,7 @@ function stampFor(
   freshness: { indexedAt?: number; uploadedAt?: number },
   repo: string,
 ) {
-  const member = sync?.files?.includes(key) === true;
+  const member = Array.isArray(sync?.files) && sync.files.includes(key);
   return member && indexedCurrent(freshness.indexedAt, freshness.uploadedAt) ? commitFields(sync?.repos?.[repo]) : {};
 }
 

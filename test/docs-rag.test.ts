@@ -176,6 +176,12 @@ function requestBodies(fetchStub: ReturnType<typeof stubFetch>) {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("docs-rag REST search", () => {
+  it("asks chat for one extra chunk and returns no more than the requested limit", async () => {
+    stubFetch(Response.json({ ...chatPayload(), chunks: [sourceChunk, { ...sourceChunk, id: "chunk-2", text: "Second passage." }] }));
+    const result = await askDocs(queryEnv, { query: "plugin", scope: "all", limit: 1 });
+    expect(result.hits).toHaveLength(1);
+  });
+
   it("keeps the sync manifest from using a caller's limit slot", async () => {
     const manifestChunk = { score: 0.99, text: "{\"repos\":{}}", item: { key: "first-party/_sync.json" } };
     stubFetch(searchResponse([manifestChunk, sourceChunk]), searchResponse([]));

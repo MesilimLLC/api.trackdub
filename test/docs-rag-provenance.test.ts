@@ -80,6 +80,17 @@ describe("provenanceFor", () => {
     });
   });
 
+  it("treats a non-array files value as no membership instead of throwing", () => {
+    const malformed = { ...sync, files: {} as unknown as string[] };
+    expect(() => provenanceFor("first-party/trackdub/docs/a.md", malformed, fresh)).not.toThrow();
+    expect(provenanceFor("first-party/trackdub/docs/a.md", malformed, fresh)).not.toHaveProperty("syncedCommit");
+  });
+
+  it("gives no commit to a fresh key when the manifest has no files array", () => {
+    const noFiles: SyncManifest = { syncedAt: sync.syncedAt, repos: sync.repos };
+    expect(provenanceFor("first-party/trackdub/docs/a.md", noFiles, fresh)).not.toHaveProperty("syncedCommit");
+  });
+
   it("omits the commit for a retained object that is not in the manifest file list", () => {
     expect(provenanceFor("first-party/trackdub/docs/deleted.md", sync, fresh)).not.toHaveProperty("syncedCommit");
   });
