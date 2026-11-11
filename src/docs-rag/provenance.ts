@@ -37,16 +37,20 @@ export async function loadSyncManifest(env: Pick<DocsRagBindings, "CORPUS">, now
 }
 
 /** `first-party/<repo>/<path>` keys map back to a path in the sibling checkout; vendor keys carry nothing extra. */
+function commitStamp(state: { commit?: string | null; dirty?: boolean | null } | undefined) {
+  if (!state?.commit) return {};
+  return { syncedCommit: state.commit, ...(state.dirty ? { syncedDirty: true } : {}) };
+}
+
 export function provenanceFor(key: string | null, sync: SyncManifest | null) {
   const match = key?.match(/^first-party\/([^/]+)\/(.+)$/);
   const repo = match?.[1];
   const localPath = match?.[2];
   if (!repo || !localPath) return {};
-  const state = sync?.repos?.[repo];
   return {
     repo,
     localPath,
-    ...(state?.commit ? { syncedCommit: state.commit, ...(state.dirty ? { syncedDirty: true } : {}) } : {}),
+    ...commitStamp(sync?.repos?.[repo]),
     ...(sync?.syncedAt ? { syncedAt: sync.syncedAt } : {}),
   };
 }

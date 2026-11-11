@@ -100,6 +100,9 @@ export function createDocsRagServer(env: DocsRagBindings, clientKey: string): Mc
         const result = await withProvenance(env, await askDocs(env, parsed, clientKey));
         return textResult(result);
       } catch (error) {
+        if (error instanceof RateLimitedError) {
+          return errorResult("rate limited: too many requests. Retry after ~10s.");
+        }
         return errorResult(error instanceof Error ? error.message : "ask failed");
       }
     },

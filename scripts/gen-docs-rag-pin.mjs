@@ -23,8 +23,11 @@ if (!existsSync(manifestPath)) {
 }
 
 const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
-const versionOf = (platform) =>
-  manifest.packages?.[platform]?.archiveUrl?.match(/\/v(\d+\.\d+\.\d+)\//)?.[1] ?? manifest.version;
+const versionOf = (platform) => {
+  const version = manifest.packages?.[platform]?.archiveUrl?.match(/\/v(\d+\.\d+\.\d+)\//)?.[1] ?? manifest.version;
+  if (!version) throw new Error(`pin: cannot resolve version for platform "${platform}" from manifest`);
+  return version;
+};
 const windows = versionOf("win-x64");
 const linux = versionOf("linux-x64");
 const abi = windows === linux ? `${windows} (Windows and Linux)` : `${windows} (Windows) / ${linux} (Linux)`;
