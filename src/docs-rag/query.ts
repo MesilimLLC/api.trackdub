@@ -170,7 +170,7 @@ export async function searchDocs(env: DocsRagBindings, request: SearchRequest, c
   const retrieve = async (keywordMatchMode: "and" | "or", symbolFallback = false) => {
     const results = await Promise.all(scopes.map(scope => aiSearchRest(env, request.query, {
       filters: filterForScope(scope),
-      max_num_results: symbolFallback ? 20 : request.limit,
+      max_num_results: symbolFallback ? 20 : request.limit + 1,
       keyword_match_mode: keywordMatchMode,
       ...(symbolFallback ? { retrieval_type: "hybrid" as const } : {}),
     }, symbolFallback)));
@@ -223,7 +223,7 @@ export async function askDocs(env: DocsRagBindings, request: SearchRequest, clie
       ai_search_options: {
         // Cloudflare uses the first user message as-is, even with rewriting enabled.
         query_rewrite: { enabled: true },
-        retrieval: { max_num_results: request.limit, ...(filters ? { filters } : {}) },
+        retrieval: { max_num_results: request.limit + 1, ...(filters ? { filters } : {}) },
       },
     }),
   });
@@ -235,6 +235,6 @@ export async function askDocs(env: DocsRagBindings, request: SearchRequest, clie
     scope: request.scope,
     searchQuery: chat.search_query ?? null,
     answer: chat.choices[0].message.content,
-    hits: hits(chat.chunks),
+    hits: hits(chat.chunks).slice(0, request.limit),
   };
 }

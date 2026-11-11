@@ -16,7 +16,14 @@ const STALE_SECONDS = 1_700_000_000;
 const fresh = { indexedAt: FRESH_SECONDS, uploadedAt: UPLOADED_MS };
 const stale = { indexedAt: STALE_SECONDS, uploadedAt: UPLOADED_MS };
 
+const FILES = [
+  "first-party/trackdub/docs/reference/x.md",
+  "first-party/trackdub/docs/a.md",
+  "first-party/trackdub/docs/old.md",
+  "first-party/api/docs/y.md",
+];
 const sync: SyncManifest = {
+  files: FILES,
   syncedAt: "2026-11-11T02:00:00+00:00",
   repos: { trackdub: { commit: "f2bf40a429eb", dirty: false }, api: { commit: "c5a5f9458717", dirty: true } },
 };
@@ -62,6 +69,19 @@ describe("provenanceFor", () => {
       syncedCommit: "c5a5f9458717",
       syncedDirty: true,
     });
+  });
+
+  it("reports the generated pin doc as generated, with no checkout path", () => {
+    expect(provenanceFor("first-party/trackdub/docs/reference/docs-rag-pin.md", sync, fresh)).toEqual({
+      repo: "trackdub",
+      generated: true,
+      source: "runtime/trt-rtx-ep.manifest.json",
+      syncedAt: sync.syncedAt,
+    });
+  });
+
+  it("omits the commit for a retained object that is not in the manifest file list", () => {
+    expect(provenanceFor("first-party/trackdub/docs/deleted.md", sync, fresh)).not.toHaveProperty("syncedCommit");
   });
 
   it("omits the commit and dirty flag for items indexed before their object was uploaded", () => {
@@ -117,7 +137,7 @@ describe("provenanceFor", () => {
 });
 
 describe("loadSyncManifest", () => {
-  const body = JSON.stringify({ syncedAt: sync.syncedAt, repos: sync.repos });
+  const body = JSON.stringify({ files: FILES, syncedAt: sync.syncedAt, repos: sync.repos });
 
   it("reads the manifest once within the cache window", async () => {
     const { env, get } = corpusWith(body);
@@ -151,7 +171,7 @@ describe("loadSyncManifest", () => {
 
 describe("withProvenance", () => {
   const uploaded = new Date(UPLOADED_MS);
-  const manifestBody = JSON.stringify({ syncedAt: sync.syncedAt, repos: sync.repos });
+  const manifestBody = JSON.stringify({ files: FILES, syncedAt: sync.syncedAt, repos: sync.repos });
 
   it("stamps hits whose own object is current, leaves vendor hits alone and hides the sync manifest", async () => {
     const { env, head } = corpusWith(manifestBody, {

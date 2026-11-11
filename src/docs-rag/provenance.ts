@@ -2,9 +2,12 @@ import type { DocsRagBindings } from "@/docs-rag/types";
 
 /** Written by Trackdub's tools/docs-rag/sync_corpus.py: which commit of each repo the corpus came from. */
 export const SYNC_KEY = "first-party/_sync.json";
+const GENERATED_PIN_KEY = "first-party/trackdub/docs/reference/docs-rag-pin.md";
 const CACHE_TTL_MS = 5 * 60_000;
 
 export interface SyncManifest {
+  /** Every key the sync staged; a commit stamp needs membership, since retained R2 objects can outlive their file. */
+  files?: string[];
   syncedAt?: string;
   repos?: Record<string, { commit?: string | null; dirty?: boolean | null }>;
 }
@@ -73,7 +76,11 @@ export function provenanceFor(
 ) {
   const location = parseFirstPartyKey(key);
   if (!location) return {};
-  const current = indexedCurrent(freshness.indexedAt, freshness.uploadedAt);
+  if (key === GENERATED_PIN_KEY) {
+    return { repo: location.repo, generated: true, source: "runtime/trt-rtx-ep.manifest.json", ...syncedAtField(sync) };
+  }
+  const member = key !== null && sync?.files?.includes(key) === true;
+  const current = member && indexedCurrent(freshness.indexedAt, freshness.uploadedAt);
   const commit = current ? commitFields(sync?.repos?.[location.repo]) : {};
   return { ...location, ...commit, ...syncedAtField(sync) };
 }

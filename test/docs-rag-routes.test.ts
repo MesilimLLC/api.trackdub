@@ -3,6 +3,7 @@ import app from "@/docs-rag/index";
 
 const SYNC = "first-party/_sync.json";
 const manifest = JSON.stringify({
+  files: ["first-party/trackdub/docs/a.md"],
   syncedAt: "2026-11-11T02:00:00+00:00",
   repos: { trackdub: { commit: "f2bf40a429eb", dirty: false } },
 });
