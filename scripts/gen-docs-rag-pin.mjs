@@ -18,6 +18,10 @@ const manifestPath = path.join(
 const check = process.argv.includes("--check");
 
 if (!existsSync(manifestPath)) {
+  if (check) {
+    console.error(`pin: ${manifestPath} not found; cannot verify the committed pin (set TRACKDUB_ROOT to the Trackdub checkout)`);
+    process.exit(1);
+  }
   console.warn(`pin: ${manifestPath} not found; keeping the committed pin.generated.ts (set TRACKDUB_ROOT to regenerate)`);
   process.exit(0);
 }

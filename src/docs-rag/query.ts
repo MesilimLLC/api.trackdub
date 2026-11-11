@@ -1,4 +1,5 @@
 import { filterForScope, isDocScope, SYSTEM_PROMPT, type DocScope } from "@/docs-rag/scopes";
+import { SYNC_KEY } from "@/docs-rag/provenance";
 import type {
   DocsRagBindings,
   DocsRagChatResult,
@@ -39,7 +40,7 @@ function chunkKey(chunk: DocsRagSearchChunk): string | null {
 }
 
 function hits(chunks: DocsRagSearchChunk[] | undefined) {
-  return (chunks ?? []).map((chunk) => ({
+  return (chunks ?? []).filter((chunk) => chunkKey(chunk) !== SYNC_KEY).map((chunk) => ({
     score: chunk.score ?? null,
     key: chunkKey(chunk),
     text: (chunk.text ?? "").slice(0, 4000),

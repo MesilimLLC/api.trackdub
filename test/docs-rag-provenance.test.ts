@@ -32,9 +32,13 @@ beforeEach(() => resetSyncManifestCache());
 
 describe("pin text", () => {
   it("states the generated pin to the answer model", () => {
-    expect(SYSTEM_PROMPT).toContain(PIN_SENTENCE.replace(/\.$/, ""));
+    expect(SYSTEM_PROMPT).toContain(PIN_SENTENCE.replace(/\.$/, "") + ", as a standalone ONNX Runtime plugin");
     expect(PIN_SENTENCE).toContain(PIN.trtRtx);
     expect(PIN_SENTENCE).toContain(PIN.windows);
+    expect(PIN_SENTENCE).toContain(PIN.linux);
+    expect(PIN_SENTENCE).toContain(PIN.cuda);
+    expect(PIN_SENTENCE).toContain("Windows");
+    expect(PIN_SENTENCE).toContain("Linux");
   });
 
   it("no longer carries the superseded pin", () => {
@@ -198,6 +202,16 @@ describe("withProvenance", () => {
       ],
     });
     expect(head).toHaveBeenCalledTimes(1);
+  });
+
+  it("still returns the hit with no commit when R2 head fails", async () => {
+    const { env } = corpusWith(manifestBody);
+    env.CORPUS.head = vi.fn().mockRejectedValue(new Error("r2 down")) as unknown as R2Bucket["head"];
+    const result = await withProvenance(env, {
+      hits: [{ key: "first-party/trackdub/docs/a.md", text: "a", indexedAt: FRESH_SECONDS }],
+    });
+    expect(result.hits[0]).toMatchObject({ repo: "trackdub", localPath: "docs/a.md", syncedAt: sync.syncedAt });
+    expect(result.hits[0]).not.toHaveProperty("syncedCommit");
   });
 
   it("omits the commit when the object is missing from R2", async () => {
