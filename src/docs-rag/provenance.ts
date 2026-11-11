@@ -42,17 +42,16 @@ function commitStamp(state: { commit?: string | null; dirty?: boolean | null } |
   return { syncedCommit: state.commit, ...(state.dirty ? { syncedDirty: true } : {}) };
 }
 
+function syncedAtStamp(sync: SyncManifest | null) {
+  return sync?.syncedAt ? { syncedAt: sync.syncedAt } : {};
+}
+
 export function provenanceFor(key: string | null, sync: SyncManifest | null) {
   const match = key?.match(/^first-party\/([^/]+)\/(.+)$/);
   const repo = match?.[1];
   const localPath = match?.[2];
   if (!repo || !localPath) return {};
-  return {
-    repo,
-    localPath,
-    ...commitStamp(sync?.repos?.[repo]),
-    ...(sync?.syncedAt ? { syncedAt: sync.syncedAt } : {}),
-  };
+  return { repo, localPath, ...commitStamp(sync?.repos?.[repo]), ...syncedAtStamp(sync) };
 }
 
 export async function withProvenance<T extends { hits: Array<{ key: string | null }> }>(

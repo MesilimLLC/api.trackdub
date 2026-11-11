@@ -23,6 +23,13 @@ function errorResult(message: string): ToolResult {
   return { content: [{ type: "text", text: message }], isError: true };
 }
 
+function failureResult(error: unknown, fallback: string): ToolResult {
+  if (error instanceof RateLimitedError) {
+    return errorResult("rate limited: too many requests. Retry after ~10s.");
+  }
+  return errorResult(error instanceof Error ? error.message : fallback);
+}
+
 /**
  * Build a fresh stateless MCP server. MCP SDK >= 1.26 requires a new
  * McpServer per request (no shared instance across transports), so callers
@@ -75,10 +82,7 @@ export function createDocsRagServer(env: DocsRagBindings, clientKey: string): Mc
         const result = await withProvenance(env, await searchDocs(env, parsed, clientKey));
         return textResult(result);
       } catch (error) {
-        if (error instanceof RateLimitedError) {
-          return errorResult("rate limited: too many requests. Retry after ~10s.");
-        }
-        return errorResult(error instanceof Error ? error.message : "search failed");
+        return failureResult(error, "search failed");
       }
     },
   );
@@ -100,10 +104,7 @@ export function createDocsRagServer(env: DocsRagBindings, clientKey: string): Mc
         const result = await withProvenance(env, await askDocs(env, parsed, clientKey));
         return textResult(result);
       } catch (error) {
-        if (error instanceof RateLimitedError) {
-          return errorResult("rate limited: too many requests. Retry after ~10s.");
-        }
-        return errorResult(error instanceof Error ? error.message : "ask failed");
+        return failureResult(error, "ask failed");
       }
     },
   );
