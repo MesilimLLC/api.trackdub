@@ -7,8 +7,6 @@ const CACHE_TTL_MS = 5 * 60_000;
 export interface SyncManifest {
   syncedAt?: string;
   repos?: Record<string, { commit?: string | null; dirty?: boolean | null }>;
-  /** R2 upload time of the manifest (ms). Index items stamped at or after it were indexed from this sync or later. */
-  uploadedAt?: number;
 }
 
 let cache: { at: number; value: SyncManifest | null } | null = null;
@@ -29,8 +27,7 @@ export async function loadSyncManifest(env: Pick<DocsRagBindings, "CORPUS">, now
     const object = await env.CORPUS.get(SYNC_KEY);
     if (object) {
       const parsed: unknown = JSON.parse(await object.text());
-      const uploadedAt = object.uploaded instanceof Date ? object.uploaded.getTime() : undefined;
-      value = isSyncManifest(parsed) ? { ...parsed, uploadedAt } : null;
+      value = isSyncManifest(parsed) ? parsed : null;
     }
   } catch {
     value = null;
@@ -44,9 +41,12 @@ function toMillis(indexedAt: number): number {
   return indexedAt < 1e12 ? indexedAt * 1000 : indexedAt;
 }
 
-/** True only when the item was indexed at or after this sync's upload, so its content is at least that sync's. */
-function indexedFromSync(sync: SyncManifest | null, indexedAt: number | undefined): boolean {
-  return sync?.uploadedAt !== undefined && indexedAt !== undefined && toMillis(indexedAt) >= sync.uploadedAt;
+/**
+ * The index reflects a document's current bytes only if it was indexed at or after that object's own
+ * R2 upload. An unchanged object keeps its old upload time, and its bytes still match the synced commit.
+ */
+function indexedCurrent(indexedAt: number | undefined, uploadedAt: number | undefined): boolean {
+  return indexedAt !== undefined && uploadedAt !== undefined && toMillis(indexedAt) >= uploadedAt;
 }
 
 function commitFields(state: { commit?: unknown; dirty?: unknown } | undefined) {
@@ -66,11 +66,25 @@ function parseFirstPartyKey(key: string | null): { repo: string; localPath: stri
   return match?.[1] && match[2] ? { repo: match[1], localPath: match[2] } : null;
 }
 
-export function provenanceFor(key: string | null, sync: SyncManifest | null, indexedAt?: number) {
+export function provenanceFor(
+  key: string | null,
+  sync: SyncManifest | null,
+  freshness: { indexedAt?: number; uploadedAt?: number } = {},
+) {
   const location = parseFirstPartyKey(key);
   if (!location) return {};
-  const commit = indexedFromSync(sync, indexedAt) ? commitFields(sync?.repos?.[location.repo]) : {};
+  const current = indexedCurrent(freshness.indexedAt, freshness.uploadedAt);
+  const commit = current ? commitFields(sync?.repos?.[location.repo]) : {};
   return { ...location, ...commit, ...syncedAtField(sync) };
+}
+
+async function objectUploadedAt(env: Pick<DocsRagBindings, "CORPUS">, key: string): Promise<number | undefined> {
+  try {
+    const head = await env.CORPUS.head(key);
+    return head?.uploaded instanceof Date ? head.uploaded.getTime() : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export async function withProvenance<T extends { hits: Array<{ key: string | null; indexedAt?: number }> }>(
@@ -78,10 +92,17 @@ export async function withProvenance<T extends { hits: Array<{ key: string | nul
   result: T,
 ) {
   const sync = await loadSyncManifest(env);
-  return {
-    ...result,
-    hits: result.hits
-      .filter((hit) => hit.key !== SYNC_KEY)
-      .map(({ indexedAt, ...hit }) => ({ ...hit, ...provenanceFor(hit.key, sync, indexedAt) })),
+  const visible = result.hits.filter((hit) => hit.key !== SYNC_KEY);
+  const uploads = new Map<string, Promise<number | undefined>>();
+  const uploadedAt = (key: string) => {
+    if (!uploads.has(key)) uploads.set(key, objectUploadedAt(env, key));
+    return uploads.get(key) ?? Promise.resolve(undefined);
   };
+  const hits = await Promise.all(
+    visible.map(async ({ indexedAt, ...hit }) => {
+      const current = hit.key && parseFirstPartyKey(hit.key) ? await uploadedAt(hit.key) : undefined;
+      return { ...hit, ...provenanceFor(hit.key, sync, { indexedAt, uploadedAt: current }) };
+    }),
+  );
+  return { ...result, hits };
 }

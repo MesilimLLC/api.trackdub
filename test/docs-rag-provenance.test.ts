@@ -13,16 +13,19 @@ import { SYSTEM_PROMPT } from "@/docs-rag/scopes";
 const UPLOADED_MS = 1_700_000_050_000;
 const FRESH_SECONDS = 1_700_000_100;
 const STALE_SECONDS = 1_700_000_000;
+const fresh = { indexedAt: FRESH_SECONDS, uploadedAt: UPLOADED_MS };
+const stale = { indexedAt: STALE_SECONDS, uploadedAt: UPLOADED_MS };
 
 const sync: SyncManifest = {
   syncedAt: "2026-11-11T02:00:00+00:00",
-  uploadedAt: UPLOADED_MS,
   repos: { trackdub: { commit: "f2bf40a429eb", dirty: false }, api: { commit: "c5a5f9458717", dirty: true } },
 };
 
-function corpusWith(body: string | null, uploaded?: Date) {
-  const get = vi.fn(async () => (body === null ? null : { text: async () => body, uploaded }));
-  return { env: { CORPUS: { get } as unknown as R2Bucket }, get };
+/** uploads maps an R2 key to its upload time; a key absent from it behaves like a missing object. */
+function corpusWith(body: string | null, uploads: Record<string, Date> = {}) {
+  const get = vi.fn(async () => (body === null ? null : { text: async () => body }));
+  const head = vi.fn(async (key: string) => (uploads[key] ? { uploaded: uploads[key] } : null));
+  return { env: { CORPUS: { get, head } as unknown as R2Bucket }, get, head };
 }
 
 beforeEach(() => resetSyncManifestCache());
@@ -41,8 +44,8 @@ describe("pin text", () => {
 });
 
 describe("provenanceFor", () => {
-  it("stamps the commit when the item was indexed after the upload", () => {
-    expect(provenanceFor("first-party/trackdub/docs/reference/x.md", sync, FRESH_SECONDS)).toEqual({
+  it("stamps the commit when the item was indexed after its object was uploaded", () => {
+    expect(provenanceFor("first-party/trackdub/docs/reference/x.md", sync, fresh)).toEqual({
       repo: "trackdub",
       localPath: "docs/reference/x.md",
       syncedCommit: "f2bf40a429eb",
@@ -51,14 +54,14 @@ describe("provenanceFor", () => {
   });
 
   it("flags a corpus synced from a dirty tree", () => {
-    expect(provenanceFor("first-party/api/docs/y.md", sync, FRESH_SECONDS)).toMatchObject({
+    expect(provenanceFor("first-party/api/docs/y.md", sync, fresh)).toMatchObject({
       syncedCommit: "c5a5f9458717",
       syncedDirty: true,
     });
   });
 
-  it("omits the commit and dirty flag for items indexed before the upload", () => {
-    expect(provenanceFor("first-party/trackdub/docs/a.md", sync, STALE_SECONDS)).toEqual({
+  it("omits the commit and dirty flag for items indexed before their object was uploaded", () => {
+    expect(provenanceFor("first-party/trackdub/docs/a.md", sync, stale)).toEqual({
       repo: "trackdub",
       localPath: "docs/a.md",
       syncedAt: "2026-11-11T02:00:00+00:00",
@@ -67,29 +70,29 @@ describe("provenanceFor", () => {
 
   it("omits the commit when the index timestamp or the upload time is unknown", () => {
     expect(provenanceFor("first-party/trackdub/docs/a.md", sync)).not.toHaveProperty("syncedCommit");
-    expect(provenanceFor("first-party/trackdub/docs/a.md", { ...sync, uploadedAt: undefined }, FRESH_SECONDS)).not.toHaveProperty("syncedCommit");
+    expect(provenanceFor("first-party/trackdub/docs/a.md", sync, { indexedAt: FRESH_SECONDS })).not.toHaveProperty("syncedCommit");
   });
 
   it("accepts millisecond index timestamps as well as seconds", () => {
-    expect(provenanceFor("first-party/trackdub/docs/a.md", sync, FRESH_SECONDS * 1000)).toHaveProperty("syncedCommit");
-    expect(provenanceFor("first-party/trackdub/docs/a.md", sync, STALE_SECONDS * 1000)).not.toHaveProperty("syncedCommit");
+    expect(provenanceFor("first-party/trackdub/docs/a.md", sync, { ...fresh, indexedAt: FRESH_SECONDS * 1000 })).toHaveProperty("syncedCommit");
+    expect(provenanceFor("first-party/trackdub/docs/a.md", sync, { ...stale, indexedAt: STALE_SECONDS * 1000 })).not.toHaveProperty("syncedCommit");
   });
 
   it("still names repo and path when no sync manifest exists", () => {
-    expect(provenanceFor("first-party/trackdub-gated/docs/z.md", null, FRESH_SECONDS)).toEqual({
+    expect(provenanceFor("first-party/trackdub-gated/docs/z.md", null, fresh)).toEqual({
       repo: "trackdub-gated",
       localPath: "docs/z.md",
     });
   });
 
   it("adds nothing to vendor or missing keys", () => {
-    expect(provenanceFor("vendor/nvidia/ep-abi-v050.md", sync, FRESH_SECONDS)).toEqual({});
-    expect(provenanceFor(null, sync, FRESH_SECONDS)).toEqual({});
+    expect(provenanceFor("vendor/nvidia/ep-abi-v050.md", sync, fresh)).toEqual({});
+    expect(provenanceFor(null, sync, fresh)).toEqual({});
   });
 
   it("keeps the dirty flag when the commit is unavailable", () => {
     const manifest: SyncManifest = { ...sync, repos: { api: { commit: null, dirty: true } } };
-    expect(provenanceFor("first-party/api/docs/y.md", manifest, FRESH_SECONDS)).toEqual({
+    expect(provenanceFor("first-party/api/docs/y.md", manifest, fresh)).toEqual({
       repo: "api",
       localPath: "docs/y.md",
       syncedAt: sync.syncedAt,
@@ -99,11 +102,10 @@ describe("provenanceFor", () => {
 
   it("drops malformed fields instead of exposing them", () => {
     const malformed = {
-      uploadedAt: UPLOADED_MS,
       syncedAt: [] as unknown as string,
       repos: { trackdub: { commit: 123 as unknown as string, dirty: "false" as unknown as boolean } },
     };
-    expect(provenanceFor("first-party/trackdub/docs/a.md", malformed, FRESH_SECONDS)).toEqual({
+    expect(provenanceFor("first-party/trackdub/docs/a.md", malformed, fresh)).toEqual({
       repo: "trackdub",
       localPath: "docs/a.md",
     });
@@ -113,13 +115,8 @@ describe("provenanceFor", () => {
 describe("loadSyncManifest", () => {
   const body = JSON.stringify({ syncedAt: sync.syncedAt, repos: sync.repos });
 
-  it("takes the upload time from the R2 object", async () => {
-    const { env } = corpusWith(body, new Date(UPLOADED_MS));
-    expect((await loadSyncManifest(env, 1_000))?.uploadedAt).toBe(UPLOADED_MS);
-  });
-
   it("reads the manifest once within the cache window", async () => {
-    const { env, get } = corpusWith(body, new Date(UPLOADED_MS));
+    const { env, get } = corpusWith(body);
     expect(await loadSyncManifest(env, 1_000)).toMatchObject({ syncedAt: sync.syncedAt });
     await loadSyncManifest(env, 2_000);
     expect(get).toHaveBeenCalledTimes(1);
@@ -127,19 +124,20 @@ describe("loadSyncManifest", () => {
   });
 
   it("refetches after the cache window", async () => {
-    const { env, get } = corpusWith(body, new Date(UPLOADED_MS));
+    const { env, get } = corpusWith(body);
     await loadSyncManifest(env, 0);
     await loadSyncManifest(env, 10 * 60_000);
     expect(get).toHaveBeenCalledTimes(2);
   });
 
-  it.each([["missing object", null], ["invalid JSON", "{not json"], ["non-object JSON", "[1,2]"]])(
-    "degrades to no stamp for %s",
-    async (_name, text) => {
-      const { env } = corpusWith(text);
-      expect(await loadSyncManifest(env)).toBeNull();
-    },
-  );
+  it.each([
+    ["missing object", null],
+    ["invalid JSON", "{not json"],
+    ["non-object JSON", "[1,2]"],
+  ])("degrades to no stamp for %s", async (_name, text) => {
+    const { env } = corpusWith(text);
+    expect(await loadSyncManifest(env)).toBeNull();
+  });
 
   it("degrades to no stamp when R2 throws", async () => {
     const env = { CORPUS: { get: vi.fn().mockRejectedValue(new Error("r2 down")) } as unknown as R2Bucket };
@@ -148,8 +146,14 @@ describe("loadSyncManifest", () => {
 });
 
 describe("withProvenance", () => {
-  it("stamps only fresh first-party hits, leaves vendor hits alone and hides the sync manifest", async () => {
-    const { env } = corpusWith(JSON.stringify({ syncedAt: sync.syncedAt, repos: sync.repos }), new Date(UPLOADED_MS));
+  const uploaded = new Date(UPLOADED_MS);
+  const manifestBody = JSON.stringify({ syncedAt: sync.syncedAt, repos: sync.repos });
+
+  it("stamps hits whose own object is current, leaves vendor hits alone and hides the sync manifest", async () => {
+    const { env, head } = corpusWith(manifestBody, {
+      "first-party/trackdub/docs/a.md": uploaded,
+      "first-party/trackdub/docs/old.md": uploaded,
+    });
     const result = await withProvenance(env, {
       scope: "all",
       hits: [
@@ -182,5 +186,25 @@ describe("withProvenance", () => {
       { score: 0.8, key: "vendor/olive/olive-why.md", text: "v" },
       { score: 0.1, key: null, text: "" },
     ]);
+    expect(head).not.toHaveBeenCalledWith("vendor/olive/olive-why.md");
+  });
+
+  it("checks each object once even when several chunks come from it", async () => {
+    const { env, head } = corpusWith(manifestBody, { "first-party/trackdub/docs/a.md": uploaded });
+    await withProvenance(env, {
+      hits: [
+        { key: "first-party/trackdub/docs/a.md", text: "1", indexedAt: FRESH_SECONDS },
+        { key: "first-party/trackdub/docs/a.md", text: "2", indexedAt: FRESH_SECONDS },
+      ],
+    });
+    expect(head).toHaveBeenCalledTimes(1);
+  });
+
+  it("omits the commit when the object is missing from R2", async () => {
+    const { env } = corpusWith(manifestBody);
+    const result = await withProvenance(env, {
+      hits: [{ key: "first-party/trackdub/docs/gone.md", text: "g", indexedAt: FRESH_SECONDS }],
+    });
+    expect(result.hits[0]).not.toHaveProperty("syncedCommit");
   });
 });
