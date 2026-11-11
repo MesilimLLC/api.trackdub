@@ -86,6 +86,11 @@ describe("provenanceFor", () => {
     expect(provenanceFor("first-party/trackdub/docs/a.md", malformed, fresh)).not.toHaveProperty("syncedCommit");
   });
 
+  it("gives no membership to a string files value", () => {
+    const malformed = { ...sync, files: "first-party/trackdub/docs/a.md" as unknown as string[] };
+    expect(provenanceFor("first-party/trackdub/docs/a.md", malformed, fresh)).not.toHaveProperty("syncedCommit");
+  });
+
   it("gives no commit to a fresh key when the manifest has no files array", () => {
     const noFiles: SyncManifest = { syncedAt: sync.syncedAt, repos: sync.repos };
     expect(provenanceFor("first-party/trackdub/docs/a.md", noFiles, fresh)).not.toHaveProperty("syncedCommit");

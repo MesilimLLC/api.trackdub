@@ -48,7 +48,7 @@ export function createDocsRagServer(env: DocsRagBindings, clientKey: string): Mc
         "(NVIDIA TRT-RTX/EP ABI, Windows ML, ONNX Runtime EPs, AMD, Intel, Qualcomm, Qwen, Whisper, speech models). " +
         "First-party text outranks vendor /latest/ pages on disagreement. " + PIN_SENTENCE + " " +
         "Prefer search_trackdub_docs; use ask_trackdub_docs only when you want a synthesized answer, and check version numbers and flags in it against the cited hits. " +
-        "First-party hits carry repo and localPath; syncedCommit appears only when the indexed copy is known to match that commit. When you have the checkout, read the local file instead of trusting the indexed copy. Generated hits (generated: true) have no checkout file. " +
+        "First-party hits carry repo and localPath; syncedCommit appears only when the indexed copy is known to match that commit, or that commit plus uncommitted changes when syncedDirty is true. When you have the checkout, read the local file instead of trusting the indexed copy. Generated hits (generated: true) have no checkout file. " +
         "Each tool call is stateless: compose every query as self-contained (include symbols, product names, and concrete context — " +
         "never bare follow-ups like 'what about its limitations?'; restate the full question instead).",
     },
