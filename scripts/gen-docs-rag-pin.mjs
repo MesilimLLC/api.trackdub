@@ -23,6 +23,11 @@ if (!existsSync(manifestPath)) {
 }
 
 const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+for (const field of ["cudaVariant", "trtRtxRuntimeVersion"]) {
+  if (typeof manifest[field] !== "string" || manifest[field].trim() === "") {
+    throw new Error(`pin: manifest field "${field}" must be a non-empty string`);
+  }
+}
 const versionOf = (platform) => {
   const version = manifest.packages?.[platform]?.archiveUrl?.match(/\/v(\d+\.\d+\.\d+)\//)?.[1] ?? manifest.version;
   if (!version) throw new Error(`pin: cannot resolve version for platform "${platform}" from manifest`);

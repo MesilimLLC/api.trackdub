@@ -120,3 +120,18 @@ describe("withProvenance", () => {
     ]);
   });
 });
+
+describe("provenance field validation", () => {
+  it("keeps the dirty flag when the commit is unavailable", () => {
+    expect(provenanceFor("first-party/api/docs/y.md", { repos: { api: { commit: null, dirty: true } } })).toEqual({
+      repo: "api",
+      localPath: "docs/y.md",
+      syncedDirty: true,
+    });
+  });
+
+  it("drops malformed fields instead of exposing them", () => {
+    const malformed = { syncedAt: [] as unknown as string, repos: { trackdub: { commit: 123 as unknown as string, dirty: "false" as unknown as boolean } } };
+    expect(provenanceFor("first-party/trackdub/docs/a.md", malformed)).toEqual({ repo: "trackdub", localPath: "docs/a.md" });
+  });
+});
