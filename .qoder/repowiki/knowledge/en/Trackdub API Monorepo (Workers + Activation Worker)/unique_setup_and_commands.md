@@ -1,0 +1,1 @@
+Top-level scripts cover both workers: `bun run db:migrate:local` / `db:migrate:remote` for the main API D1, `db:migrate:activation:local` / `db:migrate:activation:remote` for the activation worker's D1, `bun run dev:activation` and `deploy:activation*` variants, and `bun run test:all` runs both the main and activation test suites sequentially.

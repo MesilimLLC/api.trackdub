@@ -1,0 +1,4 @@
+- HTTP integration tests call the real app through `app.request(path, headers, bindings)` using the `env` object from `cloudflare:test` cast to the project's `Bindings` type, instead of constructing `Request` objects manually.
+- Test fixtures that need direct D1 access go through `bindings.DB.prepare(sql).bind(...).run()`, inserting hashed license keys and UUIDs rather than hitting admin endpoints.
+- Ephemeral cryptographic material used only inside tests (e.g. the P-256 signing keypair) is kept in dedicated plain modules with no framework imports so they resolve safely in both the Node Vitest build context and the workerd runtime.
+- Unit tests for pure lib functions (e.g. path traversal, content-type allowlisting) assert edge cases — URL-encoded dots, double-encoding, backslashes, missing headers — grouped by function name in a `describe` block.

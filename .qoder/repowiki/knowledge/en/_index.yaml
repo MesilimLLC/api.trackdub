@@ -1,31 +1,10 @@
 # 知识卡导出索引文件
 schema_version: 1
-locale: en-US
+locale: en
+commit: 485197de6e0e74d1186e488d6cccbf4acfcfc588
 branch: main
-nodes_managed: true
-exported_at: "2026-07-31T16:13:14Z"
+exported_at: "2026-11-09T14:18:22Z"
 modules:
-    "":
-        dir_name: Trackdub API — Cloudflare Workers Backend
-        title: Trackdub API — Cloudflare Workers Backend
-        scope:
-            - README.md
-            - .gitignore
-            - AGENTS.md
-            - package.json
-            - tsconfig.json
-            - drizzle.config.ts
-            - vitest.config.ts
-            - wrangler.jsonc
-            - .dev.vars.example
-            - package-lock.json
-        source_files: []
-        children:
-            - activation
-            - db
-            - tests
-        depends_on: []
-        related_to: []
     activation:
         dir_name: Activation Worker (Drizzle Kit, Wrangler & Test Config)
         title: Activation Worker (Drizzle Kit, Wrangler & Test Config)
@@ -48,12 +27,38 @@ modules:
         children: []
         depends_on: []
         related_to: []
+        similar_to:
+            - path: activation
+              reason: "Parallel Drizzle SQLite migration sets: `activation` owns `drizzle-activation/`, `db` owns `drizzle/`; same toolchain targeting different databases."
+    root:
+        dir_name: Trackdub API Monorepo (Workers + Activation Worker)
+        title: Trackdub API Monorepo (Workers + Activation Worker)
+        scope:
+            - README.md
+            - .gitignore
+            - AGENTS.md
+            - package.json
+            - tsconfig.json
+            - drizzle.config.ts
+            - vitest.config.ts
+            - wrangler.jsonc
+            - .dev.vars.example
+            - package-lock.json
+        source_files: []
+        children:
+            - activation
+            - db
+            - tests
+        depends_on: []
+        related_to: []
     tests:
-        dir_name: Integration & Activation Tests (Vitest + Cloudflare Workers Pool)
-        title: Integration & Activation Tests (Vitest + Cloudflare Workers Pool)
+        dir_name: Worker & Module Integration Tests
+        title: Worker & Module Integration Tests
         scope:
             - test/
         source_files: []
         children: []
         depends_on: []
-        related_to: []
+        related_to:
+            - path: activation
+              reason: "`test/activation/` tests boot the activation Worker via `vitest.activation.config.ts`, applying its migrations and exercising activation routes against workerd."

@@ -1,6 +1,0 @@
-- Each test file casts `env` from `cloudflare:test` to the project's `Bindings` type via `const bindings = env as unknown as Bindings` before passing it to `app.request`.
-- End-to-end route tests import the real `@/index` Hono app and assert via `app.request(path, { method, headers, body }, bindings)`, while middleware-only cases build a minimal synthetic Hono app that wires only the middleware under test plus `onError`.
-- Cross-origin requests include an `Origin: https://portal.trackdub.com` header because Better Auth enforces CSRF on state-changing POSTs and this origin is registered in trustedOrigins.
-- Assertions use `describe`/`it`/`expect` from Vitest and assert both HTTP status codes and the JSON envelope shape `{ error: { code, ... } }` produced by the shared error handler.
-- Database-dependent tests rely on the global `beforeAll` migration hook rather than per-test database setup, and user accounts needed for auth flows are provisioned once via `provisionUser` in a `beforeAll` block.
-- Activation test fixtures live in `test/activation/helpers.ts` and seed data directly against D1 using raw SQL prepared statements, keeping test setup decoupled from production routes.

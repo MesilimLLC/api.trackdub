@@ -1,0 +1,1 @@
+Bun-based Cloudflare Workers monorepo hosting the main Trackdub API and a standalone activation worker, both sharing Drizzle migrations, Better Auth, and Vitest test harnesses.

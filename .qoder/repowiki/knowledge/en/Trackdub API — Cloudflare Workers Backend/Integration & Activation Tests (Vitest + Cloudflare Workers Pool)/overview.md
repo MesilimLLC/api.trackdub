@@ -1,1 +1,0 @@
-Vitest integration tests exercising the Hono app's routes, Better Auth session flow, CORS, error handling, and activation workflows against an isolated D1 database with Drizzle migrations applied once per test run.

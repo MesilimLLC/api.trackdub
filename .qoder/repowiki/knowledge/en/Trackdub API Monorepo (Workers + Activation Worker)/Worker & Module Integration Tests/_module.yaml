@@ -1,0 +1,28 @@
+schema_version: 1
+module_path: tests
+title: Worker & Module Integration Tests
+scope:
+    - test/
+source_files: []
+depends_on: []
+related_to:
+    - path: activation
+      reason: "`test/activation/` tests boot the activation Worker via `vitest.activation.config.ts`, applying its migrations and exercising activation routes against workerd."
+kk_module_id: 59830ebc-3a41-8411-0566-bf1a290d0847
+kk_ordinal: 2
+kk_cards:
+    architecture_design:
+        id: 9aa3c8ae-3610-a7e6-0cd2-bf894e7d07be
+        title: Worker & Module Integration Tests
+    coding_conventions:
+        id: 020c03b5-871d-0fc7-77e9-b52429c7dd34
+        title: Worker & Module Integration Tests
+    overview:
+        id: 480f6519-f054-7d8d-81c9-5e6ce04a5419
+        title: Worker & Module Integration Tests
+    tech_stack:
+        id: 67275101-6001-ba21-fec7-cf6464fde78c
+        title: Worker & Module Integration Tests
+    unique_setup_and_commands:
+        id: 563ddeea-2801-cd26-0c0b-f0727f8d18cc
+        title: Worker & Module Integration Tests

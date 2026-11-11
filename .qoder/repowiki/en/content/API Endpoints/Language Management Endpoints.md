@@ -4,13 +4,19 @@
 **Referenced Files in This Document**
 - [languages.ts](file://src/routes/languages.ts)
 - [languages.ts](file://src/lib/languages.ts)
-- [auth.ts](file://src/middleware/auth.ts)
-- [authorize.ts](file://src/middleware/authorize.ts)
-- [error.ts](file://src/middleware/error.ts)
-- [validate.ts](file://src/middleware/validate.ts)
-- [schema.ts](file://src/db/schema.ts)
 - [index.ts](file://src/index.ts)
+- [dubs.ts](file://src/lib/dubs.ts)
+- [languages.test.ts](file://test/languages.test.ts)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated endpoint documentation to reflect actual static GET-only implementation
+- Removed non-existent CRUD operation documentation (POST, PUT, DELETE)
+- Corrected authentication requirements (endpoint is public, not authenticated)
+- Updated language count from generic to specific 23 languages including Chinese
+- Added accurate request/response schemas based on actual implementation
+- Removed database schema references as languages are statically defined
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -25,278 +31,200 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document provides comprehensive API documentation for the language management endpoints that enable CRUD operations on supported languages and their configuration. It covers HTTP methods, URL patterns (/api/languages), request/response schemas, authentication requirements, input validation rules, error handling patterns, and best practices for internationalization, locale validation, and multi-language content management. It also includes caching strategies and performance optimization techniques to ensure efficient delivery of language data.
+This document provides comprehensive API documentation for the language management endpoints that serve the static catalog of supported languages and their configuration. The endpoint exposes the complete list of 23 supported languages including Chinese (`zh`), which mirrors the translation coverage baked into the Trackdub desktop app. Unlike typical CRUD APIs, this endpoint is read-only and public, enabling frontend components like dropdowns and sign-up forms to populate language options without requiring authentication.
 
 ## Project Structure
-The language management feature is implemented as a dedicated route module with supporting middleware and library utilities:
-- Route handlers for /api/languages are defined in the routes layer.
-- Validation and authorization are enforced via middleware.
-- Core language logic and constants are centralized in a library module.
-- Database schema definitions provide the structure for language entities.
-- The application entry point wires up routes and middleware.
+The language management feature is implemented as a minimal route module with a static language catalog:
+- Route handler for `/api/languages` returns the static language array
+- Language constants are centralized in a library module
+- The application entry point wires up the route
+- Tests verify the presence of all 23 languages including Chinese
 
 ```mermaid
 graph TB
 Client["Client"] --> Router["App Router"]
 Router --> LangRoutes["/api/languages Routes"]
-LangRoutes --> AuthMW["Auth Middleware"]
-LangRoutes --> ValidateMW["Validation Middleware"]
-LangRoutes --> LangLib["Language Library"]
-LangRoutes --> DBSchema["DB Schema"]
-LangRoutes --> ErrorMW["Error Middleware"]
+LangRoutes --> LangLib["Static Language Catalog"]
+LangRoutes --> Response["JSON Response"]
 ```
 
 **Diagram sources**
 - [index.ts](file://src/index.ts)
 - [languages.ts](file://src/routes/languages.ts)
-- [auth.ts](file://src/middleware/auth.ts)
-- [validate.ts](file://src/middleware/validate.ts)
 - [languages.ts](file://src/lib/languages.ts)
-- [schema.ts](file://src/db/schema.ts)
-- [error.ts](file://src/middleware/error.ts)
 
 **Section sources**
 - [index.ts](file://src/index.ts)
 - [languages.ts](file://src/routes/languages.ts)
 - [languages.ts](file://src/lib/languages.ts)
-- [schema.ts](file://src/db/schema.ts)
 
 ## Core Components
-- Route Handlers: Define endpoints for listing, creating, updating, and deleting language configurations under /api/languages.
-- Authorization and Authentication: Enforce access control using middleware to ensure only authorized users can manage languages.
-- Validation: Validate request payloads and parameters to ensure correctness and security.
-- Language Library: Centralizes supported locales, default settings, and business rules for language management.
-- Database Schema: Defines the structure for language records and relationships.
-- Error Handling: Standardizes error responses across all endpoints.
+- Route Handler: Simple GET endpoint that returns the static language catalog
+- Static Language Catalog: Immutable array of 23 supported languages with codes and names
+- Application Router: Wires up the languages route under `/api/languages`
+- Integration: Used by other modules like dubs for language validation
 
 **Section sources**
 - [languages.ts](file://src/routes/languages.ts)
-- [auth.ts](file://src/middleware/auth.ts)
-- [authorize.ts](file://src/middleware/authorize.ts)
-- [validate.ts](file://src/middleware/validate.ts)
 - [languages.ts](file://src/lib/languages.ts)
-- [schema.ts](file://src/db/schema.ts)
-- [error.ts](file://src/middleware/error.ts)
+- [dubs.ts](file://src/lib/dubs.ts)
 
 ## Architecture Overview
-The language management API follows a layered architecture:
-- Client requests enter through the application router.
-- Requests are authenticated and authorized by middleware.
-- Request payloads are validated before reaching route handlers.
-- Route handlers invoke the language library for business logic.
-- Data persistence is handled via database schema definitions.
-- Errors are caught and standardized by the error middleware.
+The language management API follows a simple, static architecture:
+- Client requests enter through the application router
+- Route handlers return static data directly without authentication or validation
+- Language data is served from an in-memory constant array
+- No database interactions or complex business logic involved
 
 ```mermaid
 sequenceDiagram
 participant C as "Client"
 participant R as "Router"
-participant A as "Auth Middleware"
-participant V as "Validate Middleware"
 participant H as "Language Route Handler"
-participant L as "Language Library"
-participant D as "Database Schema"
-participant E as "Error Middleware"
+participant L as "Static Language Catalog"
 C->>R : "HTTP Request to /api/languages"
-R->>A : "Authenticate"
-A-->>R : "Authenticated"
-R->>V : "Validate Payload"
-V-->>R : "Validated"
 R->>H : "Dispatch to Handler"
-H->>L : "Business Logic"
-L->>D : "Persist/Query Data"
-D-->>L : "Result"
-L-->>H : "Response Data"
-H-->>C : "JSON Response"
-Note over E : "Errors are caught and returned uniformly"
+H->>L : "Access LANGUAGES array"
+L-->>H : "Return 23 languages"
+H-->>C : "JSON Response { items: [...] }"
 ```
 
 **Diagram sources**
 - [index.ts](file://src/index.ts)
 - [languages.ts](file://src/routes/languages.ts)
-- [auth.ts](file://src/middleware/auth.ts)
-- [validate.ts](file://src/middleware/validate.ts)
 - [languages.ts](file://src/lib/languages.ts)
-- [schema.ts](file://src/db/schema.ts)
-- [error.ts](file://src/middleware/error.ts)
 
 ## Detailed Component Analysis
 
 ### Endpoint: List Languages (GET /api/languages)
-- Purpose: Retrieve the list of supported languages and their configuration.
-- Authentication: Required; enforced by auth middleware.
-- Authorization: Admin or appropriate role required; enforced by authorize middleware.
-- Query Parameters:
-  - includeDisabled: boolean flag to include disabled languages (optional).
-  - filterByRegion: string code to filter languages by region (optional).
+- Purpose: Retrieve the static catalog of 23 supported languages
+- Authentication: **Not required** - endpoint is public for dropdown population
+- Authorization: None - accessible to all clients
+- Query Parameters: None
 - Response Schema:
-  - Array of language objects with fields: id, code, name, displayName, region, isActive, createdAt, updatedAt.
+  - Object with `items` property containing array of language objects
+  - Each language object has: `code` (string), `name` (string)
 - Example curl:
-  - curl -X GET "https://your-domain/api/languages?includeDisabled=false&filterByRegion=US" -H "Authorization: Bearer YOUR_TOKEN"
+  - curl -X GET "https://your-domain/api/languages"
 - Example JavaScript fetch:
-  - fetch("/api/languages?includeDisabled=false&filterByRegion=US", { headers: { "Authorization": "Bearer YOUR_TOKEN" } }).then(r => r.json()).then(console.log)
+  - fetch("/api/languages").then(r => r.json()).then(console.log)
+
+**Updated** The endpoint is now documented as public and read-only, matching the actual implementation.
 
 **Section sources**
-- [languages.ts](file://src/routes/languages.ts)
-- [auth.ts](file://src/middleware/auth.ts)
-- [authorize.ts](file://src/middleware/authorize.ts)
-- [languages.ts](file://src/lib/languages.ts)
+- [languages.ts:8-14](file://src/routes/languages.ts#L8-L14)
+- [languages.ts:24-41](file://src/lib/languages.ts#L24-L41)
 
-### Endpoint: Create Language (POST /api/languages)
-- Purpose: Add a new supported language configuration.
-- Authentication: Required; enforced by auth middleware.
-- Authorization: Admin or appropriate role required; enforced by authorize middleware.
-- Request Body Schema:
-  - code: string, ISO 639-1 or BCP-47 compliant, unique.
-  - name: string, human-readable name.
-  - displayName: string, localized display name.
-  - region: string, optional region code.
-  - isActive: boolean, defaults to true if omitted.
-- Input Validation Rules:
-  - code must be present and match locale pattern.
-  - name and displayName must be non-empty strings.
-  - region must be a valid region code if provided.
-  - isActive must be a boolean.
-- Response Schema:
-  - Created language object with id, code, name, displayName, region, isActive, createdAt, updatedAt.
-- Example curl:
-  - curl -X POST "https://your-domain/api/languages" -H "Authorization: Bearer YOUR_TOKEN" -H "Content-Type: application/json" -d '{"code":"fr","name":"French","displayName":"Français","region":"FR","isActive":true}'
-- Example JavaScript fetch:
-  - fetch("/api/languages", { method: "POST", headers: { "Authorization": "Bearer YOUR_TOKEN", "Content-Type": "application/json" }, body: JSON.stringify({ code: "fr", name: "French", displayName: "Français", region: "FR", isActive: true }) }).then(r => r.json()).then(console.log)
+### Supported Languages Catalog
+The API serves exactly 23 supported languages, including the recently added Chinese (`zh`):
 
-**Section sources**
-- [languages.ts](file://src/routes/languages.ts)
-- [validate.ts](file://src/middleware/validate.ts)
-- [languages.ts](file://src/lib/languages.ts)
+| Code | Name | Notes |
+|------|------|-------|
+| ar | Arabic | |
+| da | Danish | |
+| de | German | |
+| el | Greek | |
+| en | English | |
+| es | Spanish | |
+| fi | Finnish | |
+| fr | French | |
+| he | Hebrew | |
+| hi | Hindi | |
+| it | Italian | |
+| ja | Japanese | |
+| ko | Korean | |
+| ms | Malay | |
+| nl | Dutch | |
+| no | Norwegian | |
+| pl | Polish | |
+| pt | Portuguese | |
+| ru | Russian | |
+| sv | Swedish | |
+| sw | Swahili | |
+| tr | Turkish | |
+| zh | Chinese | Qwen3 CustomVoice Mandarin presets |
 
-### Endpoint: Update Language (PUT /api/languages/:id)
-- Purpose: Update an existing language configuration.
-- Authentication: Required; enforced by auth middleware.
-- Authorization: Admin or appropriate role required; enforced by authorize middleware.
-- Path Parameters:
-  - id: string, unique identifier of the language record.
-- Request Body Schema:
-  - Fields are optional; only provided fields will be updated.
-  - code, name, displayName, region, isActive follow the same validation rules as create.
-- Response Schema:
-  - Updated language object with id, code, name, displayName, region, isActive, createdAt, updatedAt.
-- Example curl:
-  - curl -X PUT "https://your-domain/api/languages/abc123" -H "Authorization: Bearer YOUR_TOKEN" -H "Content-Type: application/json" -d '{"isActive":false}'
-- Example JavaScript fetch:
-  - fetch("/api/languages/abc123", { method: "PUT", headers: { "Authorization": "Bearer YOUR_TOKEN", "Content-Type": "application/json" }, body: JSON.stringify({ isActive: false }) }).then(r => r.json()).then(console.log)
+**Updated** Added Chinese (`zh`) as the 23rd language, mirroring the desktop engine's TranslationLanguageCoverageMatrix.
 
 **Section sources**
-- [languages.ts](file://src/routes/languages.ts)
-- [validate.ts](file://src/middleware/validate.ts)
-- [languages.ts](file://src/lib/languages.ts)
-
-### Endpoint: Delete Language (DELETE /api/languages/:id)
-- Purpose: Remove a supported language configuration.
-- Authentication: Required; enforced by auth middleware.
-- Authorization: Admin or appropriate role required; enforced by authorize middleware.
-- Path Parameters:
-  - id: string, unique identifier of the language record.
-- Response Schema:
-  - Success response indicating deletion, typically empty body or confirmation message.
-- Example curl:
-  - curl -X DELETE "https://your-domain/api/languages/abc123" -H "Authorization: Bearer YOUR_TOKEN"
-- Example JavaScript fetch:
-  - fetch("/api/languages/abc123", { method: "DELETE", headers: { "Authorization": "Bearer YOUR_TOKEN" } }).then(r => r.json()).then(console.log)
-
-**Section sources**
-- [languages.ts](file://src/routes/languages.ts)
-- [auth.ts](file://src/middleware/auth.ts)
-- [authorize.ts](file://src/middleware/authorize.ts)
+- [languages.ts:24-41](file://src/lib/languages.ts#L24-L41)
 
 ### Internationalization Best Practices
 - Locale Validation:
-  - Use strict BCP-47 or ISO 639-1 codes for language identifiers.
-  - Reject malformed or unsupported locales early in the pipeline.
+  - Use BCP-47 compliant language codes (ISO 639-1)
+  - Validate against the static catalog for known languages
 - Multi-Language Content Management:
-  - Store localized strings separately from business data.
-  - Maintain a mapping between resource IDs and language-specific translations.
+  - Store localized strings separately from business data
+  - Maintain mapping between resource IDs and language-specific translations
 - Default Fallbacks:
-  - Implement fallback mechanisms to a default language when translations are missing.
+  - Implement fallback mechanisms to default language when translations missing
 - Consistency:
-  - Ensure consistent naming conventions for locale keys and file structures.
+  - Ensure consistent naming conventions for locale keys and file structures
 
 [No sources needed since this section provides general guidance]
 
 ### Caching Strategies for Language Data
 - In-Memory Cache:
-  - Cache language configurations at application startup to reduce database queries.
+  - Language catalog is already cached in memory as a constant array
 - CDN Edge Caching:
-  - Serve static language assets via CDN for low-latency global access.
+  - Serve static language assets via CDN for low-latency global access
 - Browser Caching:
-  - Set appropriate cache-control headers for language resources.
+  - Set appropriate cache-control headers for language resources
 - Versioning:
-  - Version language bundles to avoid stale content issues.
+  - Version language bundles to avoid stale content issues
 
 [No sources needed since this section provides general guidance]
 
 ## Dependency Analysis
-The language management endpoints depend on several modules:
-- Route handlers rely on middleware for authentication, authorization, and validation.
-- Business logic is encapsulated in the language library.
-- Database interactions are guided by schema definitions.
-- Error handling is centralized to ensure consistent responses.
+The language management endpoints have minimal dependencies:
+- Route handler imports the static language catalog
+- Other modules use the catalog for language validation
+- No external services or database connections required
 
 ```mermaid
 graph TB
-Routes["Language Routes"] --> Auth["Auth Middleware"]
-Routes --> Validate["Validation Middleware"]
-Routes --> Lib["Language Library"]
-Routes --> Schema["DB Schema"]
-Routes --> Error["Error Middleware"]
+Routes["Language Routes"] --> Lib["Static Language Catalog"]
+Dubs["Dubs Module"] --> Lib
 ```
 
 **Diagram sources**
 - [languages.ts](file://src/routes/languages.ts)
-- [auth.ts](file://src/middleware/auth.ts)
-- [validate.ts](file://src/middleware/validate.ts)
 - [languages.ts](file://src/lib/languages.ts)
-- [schema.ts](file://src/db/schema.ts)
-- [error.ts](file://src/middleware/error.ts)
+- [dubs.ts](file://src/lib/dubs.ts)
 
 **Section sources**
 - [languages.ts](file://src/routes/languages.ts)
-- [auth.ts](file://src/middleware/auth.ts)
-- [validate.ts](file://src/middleware/validate.ts)
 - [languages.ts](file://src/lib/languages.ts)
-- [schema.ts](file://src/db/schema.ts)
-- [error.ts](file://src/middleware/error.ts)
+- [dubs.ts](file://src/lib/dubs.ts)
 
 ## Performance Considerations
-- Minimize Database Queries:
-  - Batch operations where possible to reduce round trips.
-- Optimize Payloads:
-  - Return only necessary fields in responses.
-- Leverage Caching:
-  - Use in-memory caches for frequently accessed language data.
-- Monitor Latency:
-  - Track endpoint latency and optimize hot paths.
+- Zero Database Queries:
+  - Static data eliminates database overhead entirely
+- Minimal Memory Footprint:
+  - Small constant array with 23 language entries
+- Fast Response Times:
+  - Direct array access without processing overhead
+- CDN Optimization:
+  - Static JSON responses are ideal for CDN caching
 
 [No sources needed since this section provides general guidance]
 
 ## Troubleshooting Guide
 Common issues and resolutions:
-- Authentication Failures:
-  - Ensure tokens are valid and properly formatted.
-- Validation Errors:
-  - Check request payload against expected schema.
-- Authorization Denials:
-  - Verify user roles and permissions.
-- Database Errors:
-  - Inspect connection status and schema integrity.
+- Empty Response:
+  - Verify the endpoint path is correct: `/api/languages`
+- Missing Chinese Language:
+  - Check if using updated version with 23-language catalog
+- CORS Issues:
+  - Ensure proper origin configuration in environment variables
+- Integration Problems:
+  - Verify language code validation against the static catalog
 
 **Section sources**
-- [error.ts](file://src/middleware/error.ts)
-- [validate.ts](file://src/middleware/validate.ts)
-- [auth.ts](file://src/middleware/auth.ts)
-- [authorize.ts](file://src/middleware/authorize.ts)
+- [languages.test.ts:5-23](file://test/languages.test.ts#L5-L23)
 
 ## Conclusion
-The language management endpoints provide a robust and secure way to manage supported languages and their configurations. By following the documented schemas, validation rules, and best practices, developers can implement reliable internationalization features. Proper caching and performance optimizations ensure efficient delivery of language data across global audiences.
+The language management endpoints provide a simple, efficient way to access the static catalog of 23 supported languages. With Chinese (`zh`) now included as the 23rd language, the API fully mirrors the desktop engine's translation coverage. The read-only, public nature of the endpoint makes it ideal for frontend components that need to populate language selection interfaces without authentication overhead.
 
 [No sources needed since this section summarizes without analyzing specific files]
 
@@ -304,27 +232,20 @@ The language management endpoints provide a robust and secure way to manage supp
 
 ### Request/Response Schemas Summary
 - List Languages Response:
-  - Array of language objects with id, code, name, displayName, region, isActive, createdAt, updatedAt.
-- Create Language Request:
-  - code, name, displayName, region, isActive fields.
-- Update Language Request:
-  - Optional fields matching create schema.
-- Delete Language Response:
-  - Success confirmation or empty body.
-
-[No sources needed since this section provides general guidance]
-
-### Error Handling Patterns
-- Unauthorized:
-  - 401 status with error message.
-- Forbidden:
-  - 403 status with error message.
-- Validation Error:
-  - 422 status with detailed field errors.
-- Not Found:
-  - 404 status with resource not found message.
-- Server Error:
-  - 500 status with generic error message.
+  - Object with `items` property containing array of language objects
+  - Each language object: `{ code: string, name: string }`
+- Status Codes:
+  - 200: Success response with language catalog
+  - 404: Not found (route doesn't exist)
 
 **Section sources**
-- [error.ts](file://src/middleware/error.ts)
+- [languages.ts:12-14](file://src/routes/languages.ts#L12-L14)
+
+### Error Handling Patterns
+- Not Found:
+  - 404 status for invalid routes
+- CORS Errors:
+  - Origin validation failures handled by middleware
+
+**Section sources**
+- [index.ts:14-33](file://src/index.ts#L14-L33)

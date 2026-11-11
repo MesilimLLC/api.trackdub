@@ -1,0 +1,29 @@
+schema_version: 1
+module_path: db
+title: Drizzle ORM Database Schema & Migrations
+scope:
+    - drizzle/
+source_files: []
+depends_on: []
+related_to: []
+similar_to:
+    - path: activation
+      reason: "Parallel Drizzle SQLite migration sets: `activation` owns `drizzle-activation/`, `db` owns `drizzle/`; same toolchain targeting different databases."
+kk_module_id: 7bdc25d1-694e-f984-782a-16f6f1710c1c
+kk_ordinal: 1
+kk_cards:
+    architecture_design:
+        id: 2efdc42c-4e13-037f-df1b-404f00691f87
+        title: Drizzle ORM Database Schema & Migrations
+    coding_conventions:
+        id: 18e6ff09-0419-a747-1eb8-6a9c509a39f5
+        title: Drizzle ORM Database Schema & Migrations
+    overview:
+        id: cfcbddea-06f3-c340-39a4-b62a22d35486
+        title: Drizzle ORM Database Schema & Migrations
+    tech_stack:
+        id: f3bb9691-e0ea-0023-174e-6f5ff23f2267
+        title: Drizzle ORM Database Schema & Migrations
+    unique_setup_and_commands:
+        id: 5680d14c-4055-4d21-57da-31b895e05660
+        title: Drizzle ORM Database Schema & Migrations

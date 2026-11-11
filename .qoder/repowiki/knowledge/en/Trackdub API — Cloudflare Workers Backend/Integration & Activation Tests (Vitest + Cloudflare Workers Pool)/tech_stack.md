@@ -1,1 +1,0 @@
-Vitest with the `@cloudflare/vitest-pool-workers` pool; Drizzle migrations applied via `cloudflare:test`'s `applyD1Migrations`; Hono apps exercised through their native `request()` method; Better Auth for session/sign-in flows; ECDSA P-256 keypair for activation signing tests.

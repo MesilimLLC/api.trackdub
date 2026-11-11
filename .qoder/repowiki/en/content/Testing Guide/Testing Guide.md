@@ -35,11 +35,10 @@
 
 ## Update Summary
 **Changes Made**
-- Added comprehensive activation system test suite documentation
-- Updated Vitest configuration section to include activation-specific configuration
-- Added new section covering activation flow testing patterns
-- Enhanced project structure diagram to include activation test files
-- Updated dependency analysis to reflect activation test coverage
+- Updated Vitest configuration section to reflect cloudflareTest() worker bindings now passed under miniflare instead of poolOptions
+- Added documentation for APP_ENV and TEST_MIGRATIONS environment variable handling improvements
+- Enhanced test setup patterns section with new binding injection approach
+- Updated troubleshooting guide with new environment variable resolution strategies
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -177,6 +176,8 @@ Key responsibilities:
 - Provide deterministic environment variables for each test run.
 - Isolate activation system tests with dedicated configuration and test keys.
 
+**Updated** The testing framework now uses cloudflareTest() with worker bindings passed under miniflare instead of poolOptions, resolving APP_ENV and TEST_MIGRATIONS environment variable issues.
+
 **Section sources**
 - [src/index.ts](file://src/index.ts)
 - [test/auth-middleware.test.ts](file://test/auth-middleware.test.ts)
@@ -234,11 +235,11 @@ Best practices:
 - Avoid relying on mutable globals; reset state between tests.
 - Use separate configurations for different test domains (main API vs activation system).
 
-**Updated** Added activation-specific Vitest configuration for isolated testing environment.
+**Updated** The testing framework now uses cloudflareTest() with worker bindings passed under miniflare configuration instead of poolOptions. This resolves APP_ENV and TEST_MIGRATIONS environment variable issues by properly injecting bindings into the Miniflare runtime context.
 
 **Section sources**
-- [vitest.config.ts](file://vitest.config.ts)
-- [vitest.activation.config.ts](file://vitest.activation.config.ts)
+- [vitest.config.ts:12-31](file://vitest.config.ts#L12-L31)
+- [vitest.activation.config.ts:16-38](file://vitest.activation.config.ts#L16-L38)
 - [package.json](file://package.json)
 
 ### Middleware Unit Testing
@@ -416,7 +417,7 @@ Tips:
 - Assert both inputs and outputs of mocks to ensure correctness.
 - Leverage activation-specific test utilities for consistent mock data.
 
-**Updated** Added activation-specific mocking strategies using test helpers and test keys.
+**Updated** The testing framework now properly injects worker bindings through miniflare configuration, eliminating the need for manual environment variable workarounds.
 
 [No sources needed since this section provides general guidance]
 
@@ -570,7 +571,7 @@ ACFG --> TREACT
 - Activation tests are isolated with separate configuration to prevent interference with main API tests.
 - Use efficient test data generation and cleanup strategies for activation flows.
 
-**Updated** Added considerations for activation system test performance and isolation.
+**Updated** The improved worker binding injection through miniflare reduces test startup overhead and eliminates environment variable resolution delays.
 
 [No sources needed since this section provides general guidance]
 
@@ -588,14 +589,16 @@ Debugging techniques:
 - Run a single failing test in watch mode to iterate faster.
 - Use activation test helpers to generate valid test data for debugging.
 
-**Updated** Added activation-specific troubleshooting guidance.
+**Updated** If you encounter APP_ENV or TEST_MIGRATIONS environment variable issues, verify that cloudflareTest() is configured with worker bindings under miniflare rather than poolOptions. The current setup properly injects these variables through the Miniflare runtime context.
 
 **Section sources**
 - [src/middleware/logging.ts](file://src/middleware/logging.ts)
 - [test/error.test.ts](file://test/error.test.ts)
 - [test/activation/helpers.ts](file://test/activation/helpers.ts)
+- [vitest.config.ts:18-28](file://vitest.config.ts#L18-L28)
+- [vitest.activation.config.ts:22-36](file://vitest.activation.config.ts#L22-L36)
 
 ## Conclusion
 By organizing tests around middleware, routes, and utilities, and by carefully mocking Cloudflare Workers dependencies, you can achieve reliable coverage for the TrackDub API. The addition of the comprehensive activation system test suite provides extensive coverage for license key management, seat operations, and administrative functions. Combine fast unit tests with targeted integration tests for database and auth flows, and enforce consistent error handling and logging to simplify debugging. Adopt CI-friendly practices and performance-conscious test design to maintain speed and stability as the API evolves. The activation system's isolated test configuration ensures reliable testing without interfering with main API test suites.
 
-**Updated** Enhanced conclusion to reflect the comprehensive activation system testing capabilities.
+**Updated** The improved testing framework setup with cloudflareTest() worker bindings under miniflare provides more reliable environment variable handling and reduces test flakiness caused by APP_ENV and TEST_MIGRATIONS configuration issues.

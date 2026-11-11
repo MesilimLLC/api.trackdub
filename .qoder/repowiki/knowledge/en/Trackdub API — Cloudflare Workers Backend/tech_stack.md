@@ -1,1 +1,0 @@
-Hono 4.x, Better Auth 1.x, Drizzle ORM with SQLite dialect over Cloudflare D1, Zod for validation, all running on the Cloudflare Workers runtime via Wrangler 4.x and tested with Vitest 4 using the `@cloudflare/vitest-pool-workers` plugin against a real workerd runtime.

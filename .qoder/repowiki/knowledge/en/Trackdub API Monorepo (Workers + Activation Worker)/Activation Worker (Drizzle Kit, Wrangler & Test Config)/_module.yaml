@@ -1,0 +1,29 @@
+schema_version: 1
+module_path: activation
+title: Activation Worker (Drizzle Kit, Wrangler & Test Config)
+scope:
+    - drizzle-activation/
+    - wrangler.activation.jsonc
+    - wrangler.activation.staging.jsonc
+    - drizzle-activation.config.ts
+    - vitest.activation.config.ts
+source_files: []
+depends_on: []
+related_to: []
+kk_module_id: b15526c9-c0e7-5ace-a3d1-f8055de216c8
+kk_cards:
+    architecture_design:
+        id: e2fe872c-292d-ef8b-108f-bc0e506c865e
+        title: Activation Worker (Drizzle Kit, Wrangler & Test Config)
+    coding_conventions:
+        id: a7481cb1-2525-0c2b-d285-c55574a71ad6
+        title: Activation Worker (Drizzle Kit, Wrangler & Test Config)
+    overview:
+        id: b21ba5c5-25af-e7d8-3899-d8601dbe0f9b
+        title: Activation Worker (Drizzle Kit, Wrangler & Test Config)
+    tech_stack:
+        id: 01042ba5-c609-03cb-9402-92e4772f37c5
+        title: Activation Worker (Drizzle Kit, Wrangler & Test Config)
+    unique_setup_and_commands:
+        id: f543018d-fe3b-2449-e9ea-a45afa8f5ac4
+        title: Activation Worker (Drizzle Kit, Wrangler & Test Config)
