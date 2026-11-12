@@ -1,0 +1,3 @@
+- Each worker owns its own Drizzle schema file and migration directory, with a dedicated Drizzle Kit config and Wrangler D1 binding rather than sharing a single D1 instance.
+- Test suites use `@cloudflare/vitest-pool-workers` to spin up a real `workerd` process with bindings sourced from their respective `wrangler.*.jsonc` files, and apply D1 migrations in a setup hook before each run.
+- Cross-worker shared code lives under `src/` and is imported via the `@/*` path alias defined in the root `tsconfig.json`.

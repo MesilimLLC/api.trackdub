@@ -1,0 +1,1 @@
+Cloudflare Workers runtime (workerd), Wrangler 4, Hono 4, Better Auth 1.6, Drizzle ORM + Drizzle Kit against D1 (SQLite dialect), Vitest with `@cloudflare/vitest-pool-workers`, Bun as the package manager.

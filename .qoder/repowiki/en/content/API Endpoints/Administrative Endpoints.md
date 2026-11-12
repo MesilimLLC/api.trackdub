@@ -11,7 +11,17 @@
 - [errors.ts](file://src/lib/errors.ts)
 - [schema.ts](file://src/db/schema.ts)
 - [client.ts](file://src/db/client.ts)
+- [provenance.ts](file://src/docs-rag/provenance.ts)
+- [mcp.ts](file://src/docs-rag/mcp.ts)
+- [pin.generated.ts](file://src/docs-rag/pin.generated.ts)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated Documentation and Search Section to reflect enriched provenance fields for first-party hits
+- Added documentation for generated pin document handling with `generated: true` marker
+- Enhanced MCP tool instructions documentation to describe richer model and search preference
+- Added provenance field reference section documenting the new metadata structure
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -28,8 +38,10 @@
 ## Introduction
 This document provides comprehensive API documentation for the administrative endpoints under /api/admin. It covers HTTP methods, URL patterns, request/response schemas, authentication and authorization requirements (including admin role validation and permission checks), security considerations, example requests using curl and JavaScript fetch, guidance for implementing admin interfaces and role-based access control, and monitoring/alerting recommendations for administrative actions.
 
+The system now includes enhanced documentation search capabilities with enriched provenance tracking for first-party content, providing detailed metadata about source repositories, commit information, and synchronization status.
+
 ## Project Structure
-The administrative functionality is implemented as a dedicated route module and protected by middleware for authentication and authorization. The application wires routes at startup and uses environment configuration for sensitive settings. Database schema and client modules provide data access used by admin operations.
+The administrative functionality is implemented as a dedicated route module and protected by middleware for authentication and authorization. The application wires routes at startup and uses environment configuration for sensitive settings. Database schema and client modules provide data access used by admin operations. Enhanced documentation search provides provenance-enriched results for administrative workflows.
 
 ```mermaid
 graph TB
@@ -56,6 +68,11 @@ subgraph "DB"
 D1["db/schema.ts"]
 D2["db/client.ts"]
 end
+subgraph "Docs RAG"
+R1["docs-rag/provenance.ts"]
+R2["docs-rag/mcp.ts"]
+R3["docs-rag/pin.generated.ts"]
+end
 I["index.ts"] --> A
 I --> H
 I --> L
@@ -71,6 +88,8 @@ A --> D2
 A --> C
 A --> E
 A --> G
+R1 --> R2
+R2 --> R3
 ```
 
 **Diagram sources**
@@ -87,6 +106,9 @@ A --> G
 - [logger.ts](file://src/lib/logger.ts)
 - [schema.ts](file://src/db/schema.ts)
 - [client.ts](file://src/db/client.ts)
+- [provenance.ts](file://src/docs-rag/provenance.ts)
+- [mcp.ts](file://src/docs-rag/mcp.ts)
+- [pin.generated.ts](file://src/docs-rag/pin.generated.ts)
 
 **Section sources**
 - [index.ts](file://src/index.ts)
@@ -101,12 +123,14 @@ A --> G
 - Logging and Error Middleware: Records audit-relevant events and standardizes error responses.
 - Environment Configuration: Provides secure access to secrets and feature flags.
 - Database Schema and Client: Defines entities and provides typed queries used by admin operations.
+- Enhanced Documentation Search: Provides provenance-enriched search results with repository metadata, commit information, and synchronization status.
 
 Key responsibilities:
 - Input validation and sanitization for admin payloads.
 - Role-based access control ensuring only authorized administrators can perform sensitive actions.
 - Audit logging for compliance and operational visibility.
 - Consistent error responses with actionable details.
+- Provenance tracking for first-party documentation with repository context and sync status.
 
 **Section sources**
 - [admin.ts](file://src/routes/admin.ts)
@@ -117,9 +141,10 @@ Key responsibilities:
 - [env.ts](file://src/config/env.ts)
 - [schema.ts](file://src/db/schema.ts)
 - [client.ts](file://src/db/client.ts)
+- [provenance.ts](file://src/docs-rag/provenance.ts)
 
 ## Architecture Overview
-Administrative requests flow through standardized middleware that ensures identity, authorization, input validation, and audit logging before reaching route handlers. Handlers interact with the database via typed clients and return structured JSON responses.
+Administrative requests flow through standardized middleware that ensures identity, authorization, input validation, and audit logging before reaching route handlers. Handlers interact with the database via typed clients and return structured JSON responses. Enhanced documentation search enriches results with provenance metadata for better traceability.
 
 ```mermaid
 sequenceDiagram
@@ -128,18 +153,21 @@ participant Router as "Router (index.ts)"
 participant Auth as "Auth Middleware"
 participant Authorize as "Authorize Middleware"
 participant Handler as "Admin Route Handler"
-participant DB as "Database Client"
-participant Logger as "Logger"
+ participant DocsSearch as "Docs RAG Search"
+ participant DB as "Database Client"
+ participant Logger as "Logger"
 Client->>Router : "HTTP /api/admin/*"
 Router->>Auth : "Validate identity"
 Auth-->>Router : "User context attached"
 Router->>Authorize : "Check admin role/permissions"
 Authorize-->>Router : "Access granted/denied"
 Router->>Handler : "Invoke handler"
+Handler->>DocsSearch : "Enrich with provenance"
+DocsSearch-->>Handler : "Provenance-enhanced results"
 Handler->>DB : "Read/write operations"
 DB-->>Handler : "Result set"
 Handler->>Logger : "Audit log event"
-Handler-->>Client : "JSON response"
+Handler-->>Client : "JSON response with provenance"
 ```
 
 **Diagram sources**
@@ -147,6 +175,7 @@ Handler-->>Client : "JSON response"
 - [auth.ts](file://src/middleware/auth.ts)
 - [authorize.ts](file://src/middleware/authorize.ts)
 - [admin.ts](file://src/routes/admin.ts)
+- [provenance.ts](file://src/docs-rag/provenance.ts)
 - [client.ts](file://src/db/client.ts)
 - [logger.ts](file://src/lib/logger.ts)
 
@@ -182,6 +211,7 @@ Request/response characteristics:
 - All endpoints require admin authorization.
 - Responses follow consistent JSON structure with status codes and messages.
 - Errors include standardized error objects.
+- Enhanced results may include provenance metadata for documentation searches.
 
 Example usage patterns:
 - curl for listing and creating resources.
@@ -191,6 +221,34 @@ Note: Replace placeholders like {id} with actual identifiers. Ensure headers inc
 
 **Section sources**
 - [admin.ts](file://src/routes/admin.ts)
+
+### Enhanced Documentation Search with Provenance
+The documentation search system now enriches first-party hits with comprehensive provenance metadata:
+
+**Provenance Fields:**
+- `repo`: Source repository name extracted from the file path
+- `localPath`: Local path within the repository 
+- `syncedCommit`: Git commit hash when the indexed copy matches the synced version
+- `syncedDirty`: Boolean flag indicating uncommitted changes in the source
+- `syncedAt`: ISO timestamp of when the corpus was synchronized
+- `generated`: Boolean marker for generated documents (like the pin document)
+- `source`: Source manifest for generated content
+
+**Generated Pin Documents:**
+- The docs-rag-pin.md file is marked with `generated: true` and has no localPath
+- Generated content includes `source: "runtime/trt-rtx-ep.manifest.json"`
+- These documents represent auto-generated references rather than checked-out source files
+
+**MCP Tool Integration:**
+- Search tools prefer `search_trackdub_docs` over `ask_trackdub_docs`
+- First-party hits outrank vendor documentation on disagreements
+- Generated hits have no checkout file available for verification
+- Clients should use the localPath to read actual files when available
+
+**Section sources**
+- [provenance.ts](file://src/docs-rag/provenance.ts)
+- [mcp.ts](file://src/docs-rag/mcp.ts)
+- [pin.generated.ts](file://src/docs-rag/pin.generated.ts)
 
 ### Input Validation and Error Handling
 - Validation: Uses middleware to validate request bodies, query parameters, and path segments.
@@ -210,11 +268,13 @@ Best practices:
 - Audit Events: Log critical admin actions including who performed them, what was changed, and when.
 - Correlation IDs: Attach request IDs to trace operations across services.
 - Metrics: Emit counters and histograms for admin endpoint usage and latency.
+- Documentation Access: Track provenance-aware documentation searches for audit trails.
 
 Recommendations:
 - Centralize logs in a secure, searchable system.
 - Alert on anomalous admin activity (e.g., bulk deletions).
 - Retain logs per compliance requirements.
+- Monitor documentation provenance accuracy and sync status.
 
 **Section sources**
 - [logging.ts](file://src/middleware/logging.ts)
@@ -235,7 +295,7 @@ Guidelines:
 - [client.ts](file://src/db/client.ts)
 
 ## Dependency Analysis
-The admin route depends on middleware for auth, authorization, validation, logging, and error handling. It also relies on environment configuration and database modules.
+The admin route depends on middleware for auth, authorization, validation, logging, and error handling. It also relies on environment configuration and database modules. Enhanced documentation search adds provenance tracking dependencies.
 
 ```mermaid
 graph LR
@@ -249,6 +309,9 @@ Admin --> DBSchema["db/schema.ts"]
 Admin --> DBClient["db/client.ts"]
 Admin --> Logger["lib/logger.ts"]
 Admin --> Errors["lib/errors.ts"]
+Admin --> Provenance["docs-rag/provenance.ts"]
+Provenance --> MCP["docs-rag/mcp.ts"]
+MCP --> PinGen["docs-rag/pin.generated.ts"]
 ```
 
 **Diagram sources**
@@ -263,6 +326,9 @@ Admin --> Errors["lib/errors.ts"]
 - [client.ts](file://src/db/client.ts)
 - [logger.ts](file://src/lib/logger.ts)
 - [errors.ts](file://src/lib/errors.ts)
+- [provenance.ts](file://src/docs-rag/provenance.ts)
+- [mcp.ts](file://src/docs-rag/mcp.ts)
+- [pin.generated.ts](file://src/docs-rag/pin.generated.ts)
 
 **Section sources**
 - [admin.ts](file://src/routes/admin.ts)
@@ -276,6 +342,7 @@ Admin --> Errors["lib/errors.ts"]
 - [client.ts](file://src/db/client.ts)
 - [logger.ts](file://src/lib/logger.ts)
 - [errors.ts](file://src/lib/errors.ts)
+- [provenance.ts](file://src/docs-rag/provenance.ts)
 
 ## Performance Considerations
 - Pagination and Filtering: Implement server-side pagination and filtering for list endpoints to reduce payload size.
@@ -283,8 +350,8 @@ Admin --> Errors["lib/errors.ts"]
 - Database Indexing: Add indexes on commonly filtered columns.
 - Connection Pooling: Ensure DB client uses connection pooling and proper timeouts.
 - Rate Limiting: Apply rate limits to admin endpoints to mitigate abuse.
-
-[No sources needed since this section provides general guidance]
+- Provenance Caching: Sync manifest cache reduces R2 lookups for provenance metadata.
+- Search Optimization: Prefer search over ask endpoints for better performance.
 
 ## Troubleshooting Guide
 Common issues and resolutions:
@@ -292,22 +359,24 @@ Common issues and resolutions:
 - 403 Forbidden: Insufficient admin privileges; confirm role and permissions.
 - 400 Bad Request: Invalid payload; check validation rules and field types.
 - 500 Internal Server Error: Unexpected failures; review logs and stack traces.
+- Missing Provenance: Check sync manifest availability and R2 object timestamps.
+- Generated Content Issues: Verify pin document generation and manifest consistency.
 
 Debugging steps:
 - Enable detailed logging temporarily for problematic requests.
 - Inspect request ID correlation across logs.
 - Validate environment variables and secrets.
+- Check documentation sync status and manifest integrity.
 
 **Section sources**
 - [error.ts](file://src/middleware/error.ts)
 - [errors.ts](file://src/lib/errors.ts)
 - [logging.ts](file://src/middleware/logging.ts)
 - [logger.ts](file://src/lib/logger.ts)
+- [provenance.ts](file://src/docs-rag/provenance.ts)
 
 ## Conclusion
-The administrative endpoints provide a secure, auditable interface for system administration tasks. By enforcing strong authentication, role-based authorization, input validation, and comprehensive logging, the system ensures both safety and operational visibility. Follow the provided examples and best practices to implement robust admin interfaces and automate administrative workflows safely.
-
-[No sources needed since this section summarizes without analyzing specific files]
+The administrative endpoints provide a secure, auditable interface for system administration tasks. By enforcing strong authentication, role-based authorization, input validation, and comprehensive logging, the system ensures both safety and operational visibility. The enhanced documentation search with provenance tracking provides administrators with rich metadata about source repositories, commit information, and synchronization status, enabling better traceability and compliance. Follow the provided examples and best practices to implement robust admin interfaces and automate administrative workflows safely.
 
 ## Appendices
 
@@ -323,8 +392,6 @@ The administrative endpoints provide a secure, auditable interface for system ad
 
 Note: Replace placeholders with actual values. Ensure HTTPS and secure token storage.
 
-[No sources needed since this section provides general guidance]
-
 ### Security Checklist
 - Enforce TLS everywhere.
 - Store secrets securely and rotate regularly.
@@ -332,5 +399,24 @@ Note: Replace placeholders with actual values. Ensure HTTPS and secure token sto
 - Apply least privilege for admin roles.
 - Monitor and alert on suspicious admin activity.
 - Maintain audit trails for compliance.
+- Verify documentation provenance integrity.
 
-[No sources needed since this section provides general guidance]
+### Provenance Field Reference
+**First-party hit provenance fields:**
+- `repo`: Repository name (extracted from first-party/<repo>/... path)
+- `localPath`: Local file path within the repository
+- `syncedCommit`: Git commit hash when indexed copy matches synced version
+- `syncedDirty`: Boolean indicating uncommitted changes present
+- `syncedAt`: ISO timestamp of corpus synchronization
+- `indexedAt`: Timestamp when document was indexed (seconds or milliseconds)
+
+**Generated content markers:**
+- `generated: true`: Indicates auto-generated content (no localPath)
+- `source`: Source manifest filename for generated content
+- `syncedAt`: Available for generated content when sync manifest exists
+
+**Field availability rules:**
+- Commit info requires both membership in sync manifest and current index timestamp
+- Dirty flag preserved even when commit info unavailable
+- Non-first-party paths receive no provenance enrichment
+- Malformed fields are dropped rather than exposed

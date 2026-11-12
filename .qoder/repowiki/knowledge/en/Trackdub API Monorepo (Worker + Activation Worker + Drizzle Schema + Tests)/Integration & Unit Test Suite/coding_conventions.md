@@ -1,5 +1,0 @@
-- Tests bind the production Hono app's `Bindings` by casting `env as unknown as Bindings` (or the activation-specific `ActivationBindings`) from `cloudflare:test`.
-- HTTP interactions are exercised by calling `app.request(url, init, bindings)` directly against the mounted Hono instance rather than spinning up an HTTP server.
-- External I/O is stubbed at the call site — `vi.stubGlobal('fetch', ...)` for docs-rag AI Search calls and small `stubLimiter` factories for rate-limiting logic — instead of mocking higher-level modules.
-- Shared test helpers for seeding data (e.g. `seedLicense`, `fingerprint`) live beside the feature they support under `test/<feature>/helpers.ts` and reach D1 through prepared statements.
-- Per-feature directories mirror the source layout: one spec file per concern (activate, admin, config, deactivate, dev-license, reactivate) under `test/activation/`.

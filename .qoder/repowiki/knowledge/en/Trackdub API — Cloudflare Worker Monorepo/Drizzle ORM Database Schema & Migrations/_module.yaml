@@ -5,7 +5,9 @@ scope:
     - drizzle/
 source_files: []
 depends_on: []
-related_to: []
+related_to:
+    - path: activation
+      reason: Activation worker shares the Drizzle ORM schema and D1 tables that db defines; activation's drizzle-activation/ mirrors its migration setup.
 kk_module_id: 7bdc25d1-694e-f984-782a-16f6f1710c1c
 kk_ordinal: 1
 kk_cards:

@@ -1,1 +1,0 @@
-Vitest with the `@cloudflare/vitest-pool-workers` pool; `cloudflare:test` provides in-memory D1/R2 and the global `env`; Drizzle migrations are applied via `applyD1Migrations` from the same package.

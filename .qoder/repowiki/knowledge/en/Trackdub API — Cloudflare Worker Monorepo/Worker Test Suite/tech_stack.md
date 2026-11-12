@@ -1,0 +1,1 @@
+Vitest + vitest-pool-workers with `cloudflare:test` for simulated Cloudflare Workers bindings (D1, env vars); Drizzle ORM fixtures against a test D1 database; Better Auth for session-based auth testing.

@@ -1,1 +1,0 @@
-Root of the Trackdub API monorepo that wires a Hono Cloudflare Worker, a separate activation Worker, shared Drizzle schema/migrations, and a Vitest suite across multiple Wrangler/Vitest configs.

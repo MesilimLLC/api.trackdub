@@ -1,1 +1,0 @@
-Run via `vitest` configured for the workers pool; the global setup applies Drizzle SQL migrations to the isolated D1 database before any test file runs, using migrations compiled into `__TEST_MIGRATIONS__` at config time.

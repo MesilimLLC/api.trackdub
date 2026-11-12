@@ -1,9 +1,9 @@
 # 知识卡导出索引文件
 schema_version: 1
 locale: en
-commit: 43eab44f2a341ae44e29d939c8bf85504ccb961d
-branch: docs-rag-pin-and-provenance
-exported_at: "2026-11-11T09:17:14Z"
+commit: 2cc4eb8e204e0646dae162a99cd29f7c811f6c50
+branch: main
+exported_at: "2026-11-11T09:44:39Z"
 modules:
     activation:
         dir_name: Activation Worker (Drizzle Kit, Wrangler & Test Config)
@@ -26,10 +26,12 @@ modules:
         source_files: []
         children: []
         depends_on: []
-        related_to: []
+        related_to:
+            - path: activation
+              reason: Activation worker shares the Drizzle ORM schema and D1 tables that db defines; activation's drizzle-activation/ mirrors its migration setup.
     root:
-        dir_name: Trackdub API Monorepo (Worker + Activation Worker + Drizzle Schema + Tests)
-        title: Trackdub API Monorepo (Worker + Activation Worker + Drizzle Schema + Tests)
+        dir_name: Trackdub API — Cloudflare Worker Monorepo
+        title: Trackdub API — Cloudflare Worker Monorepo
         scope:
             - README.md
             - .gitignore
@@ -49,8 +51,8 @@ modules:
         depends_on: []
         related_to: []
     tests:
-        dir_name: Integration & Unit Test Suite
-        title: Integration & Unit Test Suite
+        dir_name: Worker Test Suite
+        title: Worker Test Suite
         scope:
             - test/
         source_files: []
@@ -58,6 +60,6 @@ modules:
         depends_on: []
         related_to:
             - path: db
-              reason: test/apply-migrations.ts applies Drizzle SQL migrations including 0000_better_auth_init.sql for Better Auth tables into in-memory D1 before tests run.
+              reason: Tests run against a simulated Cloudflare runtime with D1-backed routes (health, languages, dubs) that read/write the Drizzle schema defined in db/.
             - path: activation
-              reason: test/activation/*.test.ts imports @/activation/index and exercises its HTTP routes against the activation Worker's in-memory D1 instance.
+              reason: Worker integration tests in tests/ cover activation flows against the standalone activation worker, exercising the same routes and session handling they target.

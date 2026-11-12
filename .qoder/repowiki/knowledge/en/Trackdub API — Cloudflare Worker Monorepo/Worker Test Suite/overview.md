@@ -1,0 +1,1 @@
+Vitest-based integration tests for the Hono worker, covering activation flows, Better Auth middleware, D1-backed routes (health, languages, dubs), and session handling against a simulated Cloudflare runtime.

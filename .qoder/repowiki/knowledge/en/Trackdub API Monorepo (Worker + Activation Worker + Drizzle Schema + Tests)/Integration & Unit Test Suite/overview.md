@@ -1,1 +1,0 @@
-Vitest test suite exercising the Hono worker's middleware, routes, activation flow, and docs-rag query pipeline against Cloudflare Test Workers' in-memory D1 and R2.

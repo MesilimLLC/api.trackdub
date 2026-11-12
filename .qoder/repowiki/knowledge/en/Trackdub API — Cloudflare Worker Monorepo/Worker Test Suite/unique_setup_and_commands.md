@@ -1,0 +1,1 @@
+Tests rely on `applyD1Migrations` being invoked before each test group; the root `test/apply-migrations.ts` and `test/activation/apply-migrations.ts` act as entry points wired into Vitest's setup. The signing keypair in `test/activation/test-keys.ts` is intentionally not a real credential and exists only to satisfy ECDSA P-256 validation paths.

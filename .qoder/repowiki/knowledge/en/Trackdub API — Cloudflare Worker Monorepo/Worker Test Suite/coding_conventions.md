@@ -1,0 +1,4 @@
+- Test fixtures obtain Cloudflare bindings by casting `env` from `cloudflare:test` into the project's `Bindings` / `ActivationBindings` type rather than constructing them manually.
+- HTTP-driven tests assert response status codes first and then parse JSON bodies through typed assertions, keeping request construction close to the endpoint URL under test.
+- Seed data for activation tests is inserted directly into D1 via `bindings.DB.prepare(...).bind(...).run()` instead of going through admin routes, giving deterministic control over license rows.
+- Configuration-sensitive tests reset cached state via exported `__resetActivationConfigCache()` helpers between cases that mutate `APP_ENV` or `ALLOW_DEV_LICENSES`.

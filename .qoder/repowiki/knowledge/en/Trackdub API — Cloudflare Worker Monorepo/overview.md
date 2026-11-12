@@ -1,0 +1,1 @@
+Root of the Trackdub API monorepo wiring a Hono + Better Auth worker, its D1-backed schema, a parallel activation worker, and shared Drizzle/Vitest tooling behind one package.json script surface.

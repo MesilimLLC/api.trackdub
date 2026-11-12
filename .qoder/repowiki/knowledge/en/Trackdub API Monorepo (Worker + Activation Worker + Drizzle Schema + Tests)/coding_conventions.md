@@ -1,4 +1,0 @@
-- Each Worker gets its own Wrangler config file under the repo root named after the variant (`wrangler.jsonc`, `wrangler.docs-rag.jsonc`, `wrangler.activation.{production,staging}.jsonc`) rather than environment branching inside one file.
-- Drizzle migrations live in version-controlled directories (`drizzle/`, `drizzle-activation/`) and are generated via `drizzle-kit generate` per-worker config, not inline SQL.
-- Test suites use `@cloudflare/vitest-pool-workers` so each suite exercises the real workerd runtime instead of Node mocks.
-- Environment configuration is fail-fast on first access via Zod schemas in `src/config/env.ts` (main) and the equivalent activation config, surfacing missing secrets without leaking them.
