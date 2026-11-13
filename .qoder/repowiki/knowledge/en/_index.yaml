@@ -1,9 +1,9 @@
 # 知识卡导出索引文件
 schema_version: 1
 locale: en
-commit: 2cc4eb8e204e0646dae162a99cd29f7c811f6c50
+commit: ad544cc3c9d450b231192434469eca00da7a3508
 branch: main
-exported_at: "2026-11-11T09:44:39Z"
+exported_at: "2026-11-12T11:49:40Z"
 modules:
     activation:
         dir_name: Activation Worker (Drizzle Kit, Wrangler & Test Config)
