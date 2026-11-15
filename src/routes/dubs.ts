@@ -28,7 +28,7 @@ import type { AppEnv } from "@/types/env";
 /**
  * Portal cloud dub job API.
  *
- * Routes match portal-trackdub OpenAPI + CreateJobPage / FileDropZone /
+ * Routes match portal.trackdub OpenAPI + CreateJobPage / FileDropZone /
  * useJobs expectations. Auth is session-cookie via requireAuth.
  *
  * Honest scaffold: create leaves jobs Queued. No fake Running/Completed and
