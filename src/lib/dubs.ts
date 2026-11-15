@@ -1,6 +1,6 @@
 import { LANGUAGES } from "@/lib/languages";
 
-/** Portal `JobStatus` string values. Keep in sync with portal-trackdub useJobs. */
+/** Portal `JobStatus` string values. Keep in sync with portal.trackdub useJobs. */
 export const DUB_JOB_STATUSES = [
   "Queued",
   "Running",

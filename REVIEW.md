@@ -54,7 +54,7 @@ Do not approve a PR if any of these are unclear:
 - [ ] Unrelated cleanup is absent or clearly separated.
 - [ ] Changes stay in this Worker's owned surface (routes, middleware, auth,
       db/schema, wrangler config, tests, docs). Portal UI belongs in
-      `portal-trackdub`.
+      `portal.trackdub`.
 
 ### 2. Hard architectural constraints
 
